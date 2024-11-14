@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}ホーム{% endblock %}
+
+{% block contents %}
+<div class="container">
+    <h1 class="my-5"></h1>
+    <p>{{ user.username }}さん、こんにちは。</p>
+    <a href="{% url 'app_folder:logout' %}">ログアウト</a>
+</div>
+{% endblock %}

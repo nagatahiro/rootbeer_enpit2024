@@ -130,4 +130,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+LOGIN_URL = "app_folder:login"      ### 追加
+LOGIN_REDIRECT_URL = "app_folder:home"      ### 追加
+LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
