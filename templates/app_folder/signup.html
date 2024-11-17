@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<main>
+...
+...
+{# signup処理部分 #}
+<form method="post" action="{% url 'signup' %}">
+{% csrf_token %}
+<table>
+<tr>
+    <td>{{ form.username.label_tag }}</td>
+    <td>{{ form.username }}</td>
+</tr>
+<tr>
+    <td>{{ form.email.label_tag }}</td>
+    <td>{{ form.email }}</td>
+</tr>
+<tr>
+    <td>{{ form.password1.label_tag }}</td>
+    <td>{{ form.password1 }}</td>
+</tr>
+<tr>
+    <td>{{ form.password2.label_tag }}</td>
+    <td>{{ form.password2 }}</td>
+</tr>
+</table>
+
+<input type="submit" value="login" />
+
+{# エラーメッセージを表示 #}
+{% if form.errors %}
+    {% for field in form %}
+        {% for error in field.errors %}
+            <p>{{ error }}</p>
+        {% endfor %}
+     {% endfor %}
+{% endif %} 
+</form>
+{% endblock %}
