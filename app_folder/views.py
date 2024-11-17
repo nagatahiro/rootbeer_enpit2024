@@ -6,8 +6,9 @@ from django.views.generic import TemplateView
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
-from app_folder.forms import SignupForm
+from .forms import SignUpForm
 from django.contrib.auth import login
+from django.urls import reverse
 
 from . import forms
   
@@ -35,7 +36,7 @@ class LogoutView(LoginRequiredMixin, LogoutView):
     template_name = "app_folder/login.html"
 
 class SignUp(CreateView):
-    form_class = SignupForm
+    form_class = SignUpForm
     template_name = "app_folder/signup.html" 
     success_url = reverse_lazy('top')
 
@@ -44,3 +45,6 @@ class SignUp(CreateView):
         login(self.request, user) # 認証
         self.object = user 
         return HttpResponseRedirect(self.get_success_url()) # リダイレクト
+    def get_success_url(self):
+        # 成功後にリダイレクトする URL を指定
+        return reverse('app_folder:home')
