@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% block content %}
+{% block contents %}
 <main>
 ...
 ...
 {# signup処理部分 #}
-<form method="post" action="{% url 'signup' %}">
+<form method="post" action="{% url 'app_folder:signup' %}">
 {% csrf_token %}
 <table>
 <tr>
