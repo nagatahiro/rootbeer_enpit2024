@@ -18,8 +18,6 @@ class SampleView(View):
 top_page = SampleView.as_view()
 
 
-
-
 class TopView(TemplateView):
     template_name = "app_folder/top.html"
 
