@@ -77,7 +77,7 @@ class Photograph(View):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         _, gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        cv2.imwrite('debug_image.jpg', gray)  # デバッグ用に保存
+        cv2.imwrite('debug_image.jpg', gray)  #デバック用に保存する
 
         try:
             text = image_to_string(gray, lang='jpn', config='--psm 6 --tessdata-dir /opt/homebrew/share/tessdata')
