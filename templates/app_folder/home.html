@@ -5,6 +5,8 @@
 <div class="container">
     <h1 class="my-5"></h1>
     <p>{{ user.username }}さん、こんにちは。</p>
+    <a href="{% url 'app_folder:photograph' %}">撮影する</a>
+    <br>
     <a href="{% url 'app_folder:logout' %}">ログアウト</a>
 </div>
 {% endblock %}
