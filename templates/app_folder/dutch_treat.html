@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}割り勘計算{% endblock %}
+
+{% block contents %}
+<div class="container">
+    <h1 class="my-5">割り勘計算</h1>
+    <p>{{ user.username }}さん、ここで割り勘を計算できます。</p>
+    <form action="" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">計算する</button>
+    </form>
+
+    {% if share is not None %}
+        <hr>
+        <h3>計算結果</h3>
+        <p>商品名: {{ item_name }}</p>
+        <p>総金額: {{ amount }}円</p>
+        <p>人数: {{ people }}人</p>
+        <p>1人あたりの金額: {{ share }}円</p>
+        {% if remainder > 0 %}
+            <p>残り: {{ remainder }}円 (割り切れません)</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

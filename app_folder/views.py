@@ -33,6 +33,43 @@ class LogoutView(LoginRequiredMixin, LogoutView):
     """ログアウトページ"""
     template_name = "app_folder/login.html"
 
+from django.shortcuts import render
+from django.views import View  
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
+from .forms import DutchTreatForm
+
+class DutchTreatView(LoginRequiredMixin, View):
+    """割り勘計算ページ"""
+
+    def get(self, request, *args, **kwargs):
+        form = DutchTreatForm()
+        return render(request, 'app_folder/dutch_treat.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = DutchTreatForm(request.POST)
+        if form.is_valid():
+            amount = form.cleaned_data['amount']
+            item_name = form.cleaned_data['item_name']
+            people = form.cleaned_data['people']
+
+            # 割り勘計算
+            share = amount // people
+            remainder = amount % people
+
+            context = {
+                'form': form,
+                'item_name': item_name,
+                'amount': amount,
+                'people': people,
+                'share': share,
+                'remainder': remainder,
+            }
+            return render(request, 'app_folder/dutch_treat.html', context)
+
+        return render(request, 'app_folder/dutch_treat.html', {'form': form})
+
+
 class SignUp(CreateView):
     form_class = SignUpForm
     template_name = "app_folder/signup.html" 
