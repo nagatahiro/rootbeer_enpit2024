@@ -17,11 +17,11 @@ class TopView(TemplateView):  # TopView の定義
     template_name = "app_folder/top.html"
 
 class HomeView(LoginRequiredMixin, TemplateView):
-    template_name = "home.html"
+    template_name = "app_folder/home.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        groups = self.request.user.rolegroup_set.all()
+        groups = self.request.user.groups.all()
         orgs = [group.org for group in groups]
         context['orgs'] = orgs
         return context
