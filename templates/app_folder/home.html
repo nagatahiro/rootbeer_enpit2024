@@ -2,9 +2,51 @@
 {% block title %}ホーム{% endblock %}
 
 {% block contents %}
-<div class="container">
-    <h1 class="my-5"></h1>
+<div class="container-fluid" style="height: 100vh;">
     <p>{{ user.username }}さん、こんにちは。</p>
     <a href="{% url 'app_folder:logout' %}">ログアウト</a>
+
+    <div class="row h-100">
+        <!-- グループリスト: 左半分 -->
+        <div class="col-6 border-end">
+            <div class="d-flex flex-column align-items-center">
+                <button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#groupList" aria-expanded="false" aria-controls="groupList">
+                    グループ
+                </button>
+                <div class="collapse w-100" id="groupList">
+                    <ul class="list-group" style="width: 90%;"> <!-- 幅を90%に設定 -->
+                        {% for group in groups %}
+                        <li class="list-group-item">{{ group.name }}</li>
+                            <a href="{% url 'app_folder:group_detail' group.id %}">{{ group.name }}</a>
+                        {% endfor %}
+                        <li class="list-group-item text-center">
+                            <a href="{% url 'app_folder:create_group' %}" class="btn btn-secondary mt-2">グループ作成</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- フレンドリスト: 右半分 -->
+        <div class="col-6">
+            <div class="d-flex flex-column align-items-center">
+                <button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#friendList" aria-expanded="false" aria-controls="friendList">
+                    フレンド
+                </button>
+                <div class="collapse w-100" id="friendList">
+                    <ul class="list-group" style="width: 90%;"> <!-- 幅を90%に設定 -->
+                        {% for friend in friends %}
+                        <li class="list-group-item">{{ friend.name }}</li>
+                        {% endfor %}
+                        <li class="list-group-item text-center">
+                            <a href="{% url 'app_folder:add_friend' %}" class="btn btn-secondary mt-2">フレンド追加</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
+
+

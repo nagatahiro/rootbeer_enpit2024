@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}グループ作成{% endblock %}
+
+{% block contents %}
+<div class="container">
+    <!-- 戻るボタン -->
+    <a href="{% url 'app_folder:home' %}" class="btn btn-secondary mb-3">← 戻る</a>
+
+    <!-- グループ作成フォーム -->
+    <h1 class="my-5">グループ作成</h1>
+    <form method="post" action="{% url 'app_folder:create_group' %}">
+        {% csrf_token %}
+        
+        <!-- グループ名入力 -->
+        <div class="form-group">
+            <label for="groupName" class="form-label">グループ名</label>
+            <input type="text" id="groupName" name="group_name" class="form-control" placeholder="グループ名を入力してください" required>
+        </div>
+        <!-- 作成ボタン -->
+        <button type="submit" class="btn btn-primary mt-3">作成</button>
+    </form>
+</div>
+{% endblock %}
