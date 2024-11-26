@@ -6,47 +6,25 @@
     <p>{{ user.username }}さん、こんにちは。</p>
     <a href="{% url 'app_folder:logout' %}">ログアウト</a>
 
-    <div class="row h-100">
-        <!-- グループリスト: 左半分 -->
-        <div class="col-6 border-end">
-            <div class="d-flex flex-column align-items-center">
-                <button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#groupList" aria-expanded="false" aria-controls="groupList">
-                    グループ
-                </button>
-                <div class="collapse w-100" id="groupList">
-                    <ul class="list-group" style="width: 90%;"> <!-- 幅を90%に設定 -->
-                        {% for group in groups %}
-                        <li class="list-group-item">{{ group.name }}</li>
-                            <a href="{% url 'app_folder:group_detail' group.id %}">{{ group.name }}</a>
-                        {% endfor %}
-                        <li class="list-group-item text-center">
-                            <a href="{% url 'app_folder:create_group' %}" class="btn btn-secondary mt-2">グループ作成</a>
-                        </li>
-                    </ul>
-                </div>
+    <div class="container">
+        <h2>グループ</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <ul class="list-group">
+                    {% for group in groups %}
+                    <li class="list-group-item">
+                        <a href="{% url 'app_folder:group_detail' group.id %}">{{ group.name }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
-
-        <!-- フレンドリスト: 右半分 -->
-        <div class="col-6">
-            <div class="d-flex flex-column align-items-center">
-                <button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#friendList" aria-expanded="false" aria-controls="friendList">
-                    フレンド
-                </button>
-                <div class="collapse w-100" id="friendList">
-                    <ul class="list-group" style="width: 90%;"> <!-- 幅を90%に設定 -->
-                        {% for friend in friends %}
-                        <li class="list-group-item">{{ friend.name }}</li>
-                        {% endfor %}
-                        <li class="list-group-item text-center">
-                            <a href="{% url 'app_folder:add_friend' %}" class="btn btn-secondary mt-2">フレンド追加</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+    
+        <!-- グループ作成リンク -->
+        <div class="mt-3">
+            <a href="{% url 'app_folder:create_group' %}" class="btn btn-secondary">グループ作成</a>
         </div>
     </div>
-</div>
 {% endblock %}
 
 

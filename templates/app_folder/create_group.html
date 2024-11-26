@@ -10,16 +10,36 @@
     <h1 class="my-5">グループ作成</h1>
     <form method="post" action="{% url 'app_folder:create_group' %}">
         {% csrf_token %}
-        
-        <!-- グループ名入力 -->
         <div class="form-group">
-            <label for="groupName" class="form-label">グループ名</label>
+            <label for="groupName">グループ名</label>
             <input type="text" id="groupName" name="group_name" class="form-control" placeholder="グループ名を入力してください" required>
         </div>
-        <!-- グループ招待-->
-        <div class=""
-        <!-- 作成ボタン -->
-        <button type="submit" class="btn btn-primary mt-3">作成</button>
+
+        <!-- アカウント検索 -->
+        <h2 class="mt-4">メンバーを検索して招待</h2>
+        <div class="form-group">
+            <label for="searchUser">アカウント名</label>
+            <input type="text" id="searchUser" name="search_user" class="form-control" placeholder="ユーザー名を検索">
+        </div>
+        <button type="submit" name="action" value="search" class="btn btn-info mt-3">検索</button>
+
+        <!-- 検索結果表示 -->
+        {% if search_results %}
+        <h3 class="mt-4">検索結果</h3>
+        <ul>
+            {% for user in search_results %}
+            <li>
+                <label>
+                    <input type="checkbox" name="invited_users" value="{{ user.id }}">
+                    {{ user.username }}
+                </label>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <button type="submit" name="action" value="create" class="btn btn-primary mt-3">作成</button>
     </form>
 </div>
 {% endblock %}
+
