@@ -4,22 +4,27 @@
 {% block contents %}
 <div class="container-fluid" style="height: 100vh;">
     <p>{{ user.username }}さん、こんにちは。</p>
-    <a href="{% url 'app_folder:logout' %}">ログアウト</a>
+    <a href="{% url 'app_folder:top' %}">ログアウト</a>
 
     <div class="container">
         <h2>グループ</h2>
-        <div class="row">
-            <div class="col-md-6">
-                <ul class="list-group">
-                    {% for group in groups %}
-                    <li class="list-group-item">
-                        <a href="{% url 'app_folder:group_detail' group.id %}">{{ group.name }}</a>
-                    </li>
+        <ul>
+            {% for item in groups_with_members %}
+            <li>
+                <a href="{% url 'app_folder:group_detail' item.group.id %}">
+                   <strong>{{ item.group.name }}</strong>
+                </a>
+                <ul>
+                    {% for member in item.members %}
+                    <li>{{ member.username }}</li>
                     {% endfor %}
                 </ul>
-            </div>
-        </div>
-    
+            </li>
+            {% empty %}
+            <p>所属しているグループはありません。</p>
+            {% endfor %}
+        </ul>
+
         <!-- グループ作成リンク -->
         <div class="mt-3">
             <a href="{% url 'app_folder:create_group' %}" class="btn btn-secondary">グループ作成</a>
