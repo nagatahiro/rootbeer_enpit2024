@@ -20,8 +20,6 @@ class SignUpForm(UserCreationForm):
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'form-control'    
 
-
-class DutchTreatForm(forms.Form):
-    amount = forms.IntegerField(label="金額", min_value=0)
-    item_name = forms.CharField(label="商品名", max_length=100)
-    people = forms.IntegerField(label="人数", min_value=1)
+class SplitBillForm(forms.Form):#割り勘用のファイル
+    amount = forms.DecimalField(label="合計金額", max_digits=10, decimal_places=2)
+    members_count = forms.IntegerField(label="人数", min_value=1)

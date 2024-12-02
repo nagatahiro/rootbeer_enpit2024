@@ -1,0 +1,31 @@
+<h2>グループ編集: {{ group.name }}</h2>
+
+<h3>現在のメンバー</h3>
+<form method="post">
+    {% csrf_token %}
+    <ul>
+        {% for member in members %}
+        <li>
+            <input type="checkbox" name="remove_members" value="{{ member.id }}">
+            {{ member.username }}
+        </li>
+        {% endfor %}
+    </ul>
+    <button type="submit">選択したメンバーを削除</button>
+</form>
+
+<h3>メンバーを追加</h3>
+<form method="post">
+    {% csrf_token %}
+    <ul>
+        {% for user in all_users %}
+        <li>
+            <input type="checkbox" name="new_members" value="{{ user.id }}">
+            {{ user.username }}
+        </li>
+        {% endfor %}
+    </ul>
+    <button type="submit">選択したメンバーを追加</button>
+</form>
+
+<a href="{% url 'app_folder:group_detail' group.id %}">戻る</a>
