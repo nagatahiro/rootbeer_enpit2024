@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+
+{% block contents %}
+<h2>グループ: {{ group.name }}</h2>
+<p>グループの所有者: {{ group.owner.username }}</p>
+
+<h3>メンバー</h3>
+<ul>
+    {% for member in members %}
+    <li>{{ member.username }}</li>
+    {% endfor %}
+</ul>
+<p>メンバー数: {{ members_count }} 人</p> <!-- メンバー数を表示 -->
+
+<!-- 割り勘計算フォーム -->
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">計算</button>
+</form>
+
+<!-- 計算結果を表示 -->
+{% if result is not None %}
+    <h4>1人あたりの金額: {{ result|floatformat:2 }}円</h4>
+{% endif %}
+
+
+<!-- 編集ボタン -->
+<a href="{% url 'app_folder:edit_group' group.id %}" class="btn btn-primary">編集</a>
+<a href="{% url 'app_folder:home' %}">戻る</a>
+
+{% endblock %}
+
