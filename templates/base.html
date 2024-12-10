@@ -13,52 +13,40 @@
     <title> ワリポケ </title>
 
     {% block extra_css %}{% endblock %}
-
-</head>
+  </head>
 
   <body>
-    <!-- ↓↓１番上のナビゲーションバー↓↓ -->
+    <!-- ナビゲーションバー -->
     <div class="container-fluid">
       <div class="row">
         <div class="col-12">
           <nav class="navbar navbar-expand-lg fixed-top navbar-dark bs-navbar" style='background-color:cadetblue;' id="bs-navbar">
-            <a class="navbar-brand mr-md-2" href="/app_folder/top_page">
+            <a class="navbar-brand mr-md-2" href="/app_folder/home">
               ワリポケ
             </a>
-              <!-- ↓↓レイアウトを調整する為のダミー↓↓ -->
+              <!-- レイアウト調整用のダミー -->
               <ul class="navbar-nav mr-auto">
                 <li class="nav-item"><a class="nav-link" href="#">   </a></li>
                 <li class="nav-item"><a class="nav-link" href="#">   </a></li>
-              </ul>
-              <!-- ↑↑ダミーここまで↑↑ -->                            
-
-              <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="/accounts/login" >ログイン</a></li>
-                <li class="nav-item"><a class="nav-link" href="/accounts/logout" >ログアウト</a></li>
-              </ul>
-            </div>
+              </ul>                           
           </nav>
         </div>
       </div>
     </div>
 
-
-    <!-- 「サイドバー」と「コンテンツ本体部分」 -->
+    <!-- コンテンツ本体 -->
     <div id="content" class="container-fluid">
-      <div class="row flex-xl-nowrap">
-        <!-- ↓↓コンテンツ本体↓↓ -->
-        <div class="col-10">
+      <div class="row">
+        <!-- コンテンツ本体部分 -->
+        <div class="col-12">
           {% block contents %}
           {% endblock %}
         </div>
-        <!-- ↑↑コンテンツ本体ここまで↑↑ -->
       </div>
-    </div>
     </div>
   </body>
 </html>
 
-<!-- サイドバーに使用しているアイコン -->
-<!-- 使用できるアイコンの一覧： https://voyager-jp.com/blog/javascript/feather/ -->
+<!-- アイコンライブラリ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.9.0/feather.min.js"></script>
 <script>feather.replace()</script>
