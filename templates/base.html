@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+
+{% load bootstrap4 %}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='slim' %}
+{% load static %}
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type='text/css' href="{% static 'css/style.css'%}">
+    <link rel="stylesheet" href="https://cccabinet.jpn.org/bootstrap4/css/style.css">
+    <title> ワリポケ </title>
+
+    {% block extra_css %}{% endblock %}
+  </head>
+
+  <body>
+    <!-- ナビゲーションバー -->
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <nav class="navbar navbar-expand-lg fixed-top navbar-dark bs-navbar" style='background-color:cadetblue;' id="bs-navbar">
+            <a class="navbar-brand mr-md-2" href="/app_folder/home">
+              ワリポケ
+            </a>
+              <!-- レイアウト調整用のダミー -->
+              <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="#">   </a></li>
+                <li class="nav-item"><a class="nav-link" href="#">   </a></li>
+              </ul>                           
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- コンテンツ本体 -->
+    <div id="content" class="container-fluid">
+      <div class="row">
+        <!-- コンテンツ本体部分 -->
+        <div class="col-12">
+          {% block contents %}
+          {% endblock %}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!-- アイコンライブラリ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.9.0/feather.min.js"></script>
+<script>feather.replace()</script>

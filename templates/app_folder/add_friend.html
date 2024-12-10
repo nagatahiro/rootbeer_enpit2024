@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}フレンド追加{% endblock %}
+
+{% block contents %}
+<div class="container">
+    <h1 class="my-5">フレンド追加</h1>
+    <form method="post" action="{% url 'app_folder:add_friend' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="friendName">フレンド名</label>
+            <input type="text" id="friendName" name="friend_name" class="form-control" placeholder="フレンド名を入力してください" required>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">追加</button>
+    </form>
+</div>
+{% endblock %}
