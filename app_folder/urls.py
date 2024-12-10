@@ -14,6 +14,7 @@ urlpatterns = [
     path('signup/', views.SignUp.as_view(), name='signup'),
     path('create-group/', views.CreateGroupView.as_view(), name='create_group'),  # グループ作成ページ
     path('home/<int:group_id>/', views.GroupDetailView.as_view(), name='group_detail'),  # グループ詳細ページ
+    path('edit-group/<int:group_id>/', views.EditGroupView.as_view(), name='edit_group'),
     path('add-friend/', views.AddFriendPageView.as_view(), name='add_friend'),  # フレンド追加用のURL
     path('photograph/', views.PhotographView.as_view(), name='photograph'),
 
