@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}撮影ページ{% endblock %}
+
+{% block contents %}
+<h1>撮影ページ</h1>
+<a href="{% url 'app_folder:home' %}">ホームに戻る</a>
+
+<!-- 撮影とプレビューエリア -->
+<div class="camera-container">
+  <video id="video" width="640" height="480" autoplay></video>
+  <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+  <img id="preview" width="640" height="480" style="display: none;" alt="撮影画像のプレビュー">
+  <button id="capture-button" class="btn btn-primary">撮影</button>
+  <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
+  <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
+  <div id="result" style="margin-top: 20px;"></div>
+</div>
+
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const preview = document.getElementById('preview');
+  const captureButton = document.getElementById('capture-button');
+  const retryButton = document.getElementById('retry-button');
+  const extractButton = document.getElementById('extract-button');
+  const resultDiv = document.getElementById('result');
+  const context = canvas.getContext('2d');
+  let stream = null;
+
+  // カメラを起動
+  const startCamera = () => {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(cameraStream => {
+        stream = cameraStream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+        preview.style.display = 'none';
+        retryButton.style.display = 'none';
+        extractButton.style.display = 'none';
+        captureButton.style.display = 'inline-block';
+        resultDiv.innerHTML = '';
+      })
+      .catch(error => {
+        console.error("カメラのアクセスに失敗しました:", error);
+      });
+  };
+
+  // カメラを停止
+  const stopCamera = () => {
+    if (stream) {
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+      stream = null;
+    }
+  };
+
+  // 初期化
+  startCamera();
+
+  // 撮影
+  captureButton.addEventListener('click', () => {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = canvas.toDataURL('image/jpeg');
+    preview.src = imageData;
+    video.style.display = 'none';
+    canvas.style.display = 'none';
+    preview.style.display = 'block';
+    retryButton.style.display = 'inline-block';
+    extractButton.style.display = 'inline-block';
+    stopCamera(); // カメラを停止
+  });
+
+  // 再撮影
+  retryButton.addEventListener('click', () => {
+    startCamera();
+  });
+
+  // 文字抽出
+  extractButton.addEventListener('click', () => {
+    const imageData = canvas.toDataURL('image/jpeg');
+
+    fetch("{% url 'app_folder:photograph' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: new URLSearchParams({ 'image': imageData })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        resultDiv.innerHTML = `<h3>抽出された文字:</h3><pre>${data.extracted_text}</pre>`;
+      } else {
+        alert(`エラー: ${data.message}`);
+      }
+    })
+    .catch(error => console.error('エラー:', error));
+  });
+</script>
+{% endblock %}
