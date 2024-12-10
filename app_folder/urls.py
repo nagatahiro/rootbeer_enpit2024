@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .views import TopView
 from django.contrib.auth.views import LogoutView
+from .views import edit_group
 
 app_name = "app_folder"  
 
@@ -17,5 +18,6 @@ urlpatterns = [
     path('edit-group/<int:group_id>/', views.EditGroupView.as_view(), name='edit_group'),
     path('add-friend/', views.AddFriendPageView.as_view(), name='add_friend'),  # フレンド追加用のURL
     path('photograph/', views.PhotographView.as_view(), name='photograph'),
+    path('edit-group/<int:id>/', edit_group, name='edit_group'),
 
 ]
