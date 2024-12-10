@@ -28,4 +28,34 @@
     <button type="submit">選択したメンバーを追加</button>
 </form>
 
+<h3>メンバーを検索して追加</h3>
+<!-- 検索フォーム -->
+<form method="get">
+    <input
+        type="text"
+        name="search"
+        placeholder="ユーザー名を検索"
+        value="{{ request.GET.search|default:'' }}"
+    >
+    <button type="submit">検索</button>
+</form>
+
+<!-- 検索結果 -->
+{% if search_results %}
+    <form method="post">
+        {% csrf_token %}
+        <ul>
+            {% for user in search_results %}
+            <li>
+                <input type="checkbox" name="new_members" value="{{ user.id }}">
+                {{ user.username }} 
+            </li>
+            {% endfor %}
+        </ul>
+        <button type="submit">選択したユーザーを追加</button>
+    </form>
+{% else %}
+    <p>該当するユーザーが見つかりませんでした。</p>
+{% endif %}
+
 <a href="{% url 'app_folder:group_detail' group.id %}">戻る</a>

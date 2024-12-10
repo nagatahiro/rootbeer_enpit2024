@@ -15,6 +15,7 @@ from .models import CustomGroup
 from django.shortcuts import render, get_object_or_404
 from .models import CustomGroup
 from .forms import SplitBillForm
+from django.db.models import Q
 
 from . import forms
 
@@ -179,7 +180,18 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
         group = CustomGroup.objects.get(id=group_id)
         context['group'] = group
         context['members'] = group.members.all()
-        context['all_users'] = User.objects.exclude(id__in=group.members.all())  # まだメンバーになっていないユーザー
+
+        # 検索クエリがあればそれに基づいて結果を返す
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # 検索結果を取得（部分一致検索 + 現在のメンバー以外のユーザー）
+            context['search_results'] = User.objects.filter(
+                Q(username__icontains=search_query) | Q(email__icontains=search_query)
+            ).exclude(id__in=group.members.all())
+        else:
+            context['search_results'] = []
+        
         return context
 
     def post(self, request, *args, **kwargs):
