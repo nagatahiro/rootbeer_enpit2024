@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .views import TopView
 from django.contrib.auth.views import LogoutView
+from .views import edit_group
 
 app_name = "app_folder"  # 名前空間を正しく設定
 
@@ -16,5 +17,6 @@ urlpatterns = [
     path('home/<int:group_id>/', views.GroupDetailView.as_view(), name='group_detail'),  # グループ詳細ページ
     path('add-friend/', views.AddFriendPageView.as_view(), name='add_friend'),  # フレンド追加用のURL
     path('photograph/', views.PhotographView.as_view(), name='photograph'),
+    path('edit-group/<int:id>/', edit_group, name='edit_group'),
 
 ]
