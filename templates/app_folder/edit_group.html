@@ -14,20 +14,6 @@
     <button type="submit">選択したメンバーを削除</button>
 </form>
 
-<h3>メンバーを追加</h3>
-<form method="post">
-    {% csrf_token %}
-    <ul>
-        {% for user in all_users %}
-        <li>
-            <input type="checkbox" name="new_members" value="{{ user.id }}">
-            {{ user.username }}
-        </li>
-        {% endfor %}
-    </ul>
-    <button type="submit">選択したメンバーを追加</button>
-</form>
-
 <h3>メンバーを検索して追加</h3>
 <!-- 検索フォーム -->
 <form method="get">
