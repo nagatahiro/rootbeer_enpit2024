@@ -3,7 +3,7 @@ from . import views
 from .views import TopView
 from django.contrib.auth.views import LogoutView
 
-app_name = "app_folder"  # 名前空間を正しく設定
+app_name = "app_folder"  
 
 urlpatterns = [
     path('top_page/', views.top_page, name='top_page'),
