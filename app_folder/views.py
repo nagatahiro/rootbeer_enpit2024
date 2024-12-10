@@ -80,6 +80,7 @@ class SignUp(CreateView):
         login(self.request, user)
         self.object = user
         return HttpResponseRedirect(self.get_success_url())
+        
 
 class CreateGroupView(LoginRequiredMixin, TemplateView):
     """グループ作成ページ"""
@@ -87,11 +88,13 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # セッションから検索結果と現在のグループ名を取得してコンテキストに渡す
+        # セッションから検索結果、現在のグループ名、選択済みユーザーを取得
         search_results = self.request.session.pop('search_results', [])
-        current_group_name = self.request.session.pop('current_group_name', '')
+        current_group_name = self.request.session.get('current_group_name', '')
+        selected_users = self.request.session.get('selected_users', [])
         context['search_results'] = search_results
         context['current_group_name'] = current_group_name
+        context['selected_users'] = selected_users
         return context
 
     def post(self, request, *args, **kwargs):
@@ -101,6 +104,14 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
             # ユーザー検索処理
             search_query = request.POST.get('search_user', '').strip()
             group_name = request.POST.get('group_name', '').strip()
+
+            # セッションから選択済みユーザーを取得
+            selected_users = self.request.session.get('selected_users', [])
+
+            # 新たに選択されたユーザーを追加
+            new_selected_users = request.POST.getlist('invited_users')
+            selected_users = list(set(selected_users + new_selected_users))  # 重複を排除
+            self.request.session['selected_users'] = selected_users
 
             # グループ名をセッションに保存
             request.session['current_group_name'] = group_name
@@ -121,22 +132,31 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
         elif action == "create":
             # グループ作成処理
             group_name = request.POST.get('group_name', '').strip()
-            invited_users_ids = request.POST.getlist('invited_users')  # 招待するユーザーIDリスト
+
+            # セッションから選択済みユーザーを取得
+            invited_users_ids = self.request.session.get('selected_users', [])
 
             if group_name:
                 # グループを作成
                 group, created = CustomGroup.objects.get_or_create(name=group_name, owner=request.user)
+
+                group.members.add(request.user)
 
                 if invited_users_ids:
                     invited_users = User.objects.filter(id__in=invited_users_ids)
                     group.members.add(*invited_users)
                     print(f"招待されたユーザー: {[user.username for user in invited_users]}")
 
+                # セッションをクリア
+                self.request.session.pop('selected_users', None)
+                self.request.session.pop('current_group_name', None)
+
                 messages.success(request, f"グループ '{group_name}' を作成しました。")
             else:
                 messages.error(request, "グループ名を入力してください。")
 
             return redirect('app_folder:home')
+
         
         
 
@@ -160,7 +180,12 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
         members_count = group.members.count()  # メンバー数を取得
 
         context['group'] = group
-        context['members'] = group.members.all()
+        members = group.members.all()
+        sorted_members = sorted(
+            [member for member in members if member != group.owner],
+            key=lambda x: x.username
+        )
+        context['members'] = [group.owner] + sorted_members
         context['form'] = SplitBillForm(initial={'members_count': members_count})  # 初期値として人数を設定
         context['result'] = self.request.session.pop('result', None)  # 計算結果をセッションから取得
         return context
@@ -227,7 +252,7 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
             remove_members = User.objects.filter(id__in=remove_members_ids)
             group.members.remove(*remove_members)
 
-        return redirect('app_folder:group_detail', group_id=group_id)
+        return redirect('app_folder:edit_group', group_id=group_id)
 
     def get_success_url(self):
         # 成功後にリダイレクトする URL を指定
