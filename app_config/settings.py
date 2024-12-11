@@ -178,4 +178,3 @@ def set_api_key_from_gcs(bucket_name, source_blob_name):
 # GCSからAPIキーを取得して環境変数に設定
 set_api_key_from_gcs(GCS_BUCKET_NAME, GCS_API_KEY_PATH)
 
-# ここで、環境変数を使用してAPIキーを取得することができます
