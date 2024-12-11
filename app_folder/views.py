@@ -152,18 +152,25 @@ class AddFriendPageView(LoginRequiredMixin, TemplateView):
 from decimal import Decimal
 class GroupDetailView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/group_detail.html"
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(CustomGroup, id=group_id)
         members_count = group.members.count()  # メンバー数を取得
 
+        # セッションから合計金額を取得
+        total_amount = self.request.session.pop('total_amount', None)
+
+        # フォームの初期値として合計金額を設定
+        context['form'] = SplitBillForm(initial={
+            'amount': total_amount,
+            'members_count': members_count
+        })
         context['group'] = group
         context['members'] = group.members.all()
-        context['form'] = SplitBillForm(initial={'members_count': members_count})  # 初期値として人数を設定
         context['result'] = self.request.session.pop('result', None)  # 計算結果をセッションから取得
         return context
+
 
     def post(self, request, *args, **kwargs):
         group_id = self.kwargs.get('group_id')
@@ -237,6 +244,15 @@ class PhotographView(View):
     def get(self, request, *args, **kwargs):
         return render(request, 'app_folder/photograph.html')
 
+    def extract_total_amount(self, text):
+        """レシートテキストから合計金額を抽出する"""
+        import re
+        pattern = r'合計\s*¥(\d+)'
+        match = re.search(pattern, text)
+        if match:
+            return int(match.group(1))  # 数値として返す
+        return None
+
     def post(self, request, *args, **kwargs):
         try:
             # リクエストから画像データを取得
@@ -245,7 +261,7 @@ class PhotographView(View):
                 return JsonResponse({'status': 'error', 'message': '画像データがありません。'})
 
             # Base64データをデコード
-            _, encoded = image_data.split(",", 1)  # "data:image/jpeg;base64,..." 形式を分割
+            _, encoded = image_data.split(",", 1)
             image_bytes = base64.b64decode(encoded)
 
             # Google Cloud Vision API クライアントの初期化
@@ -259,11 +275,41 @@ class PhotographView(View):
 
             # 抽出されたテキスト
             texts = response.text_annotations
-            if texts:
-                extracted_text = texts[0].description  # 最初のテキストが全文
-            else:
-                extracted_text = "テキストが検出されませんでした。"
+            if not texts:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'テキストが検出されませんでした。'
+                })
 
-            return JsonResponse({'status': 'success', 'extracted_text': extracted_text})
+            extracted_text = texts[0].description
+            
+            # 合計金額を抽出
+            total_amount = self.extract_total_amount(extracted_text)
+            
+            if total_amount is not None:
+            # 合計金額をセッションに保存
+                request.session['total_amount'] = total_amount
+
+            # レスポンスデータの作成
+            response_data = {
+                'status': 'success',
+                'extracted_text': extracted_text,
+                'total_amount': total_amount,
+                'formatted_total': f'¥{total_amount}' if total_amount is not None else None
+            }
+            
+            # ここで必要に応じてデータベースに保存などの処理を追加できます
+            # 例：
+            # Receipt.objects.create(
+            #     total_amount=total_amount,
+            #     raw_text=extracted_text,
+            #     # その他必要なフィールド
+            # )
+
+            return JsonResponse(response_data)
+
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
+
+# EditGroupViewをedit_groupとしてエクスポート
+edit_group = EditGroupView.as_view()

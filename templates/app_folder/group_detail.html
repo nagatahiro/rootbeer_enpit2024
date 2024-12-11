@@ -11,10 +11,27 @@
     <li>{{ member.username }}</li>
     {% endfor %}
 </ul>
-<p>メンバー数: {{ members_count }} 人</p> <!-- メンバー数を表示 -->
+<p>メンバー数: {{ members_count }} 人</p>
+
+<!-- カメラ機能 -->
+<div class="camera-container mt-4" style="display: none;">
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+    <img id="preview" width="640" height="480" style="display: none;" alt="撮影画像のプレビュー">
+    <div class="mt-2">
+        <button id="capture-button" class="btn btn-outline-primary">撮影</button>
+        <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
+        <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
+    </div>
+    <div id="result" style="margin-top: 20px;"></div>
+</div>
+
+<!-- 撮影ボタン -->
+<button id="show-camera-button" class="btn btn-outline-success" onclick="toggleCamera()">レシート撮影</button>
 
 <!-- 割り勘計算フォーム -->
-<form method="post">
+<form id="split-calculation-form" method="post" style="display: none; margin-top: 20px;">
+    <h4>料金計算</h4>
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-success">計算</button>
@@ -25,11 +42,114 @@
     <h4>1人あたりの金額: {{ result|floatformat:2 }}円</h4>
 {% endif %}
 
+<!-- 編集・戻るボタン -->
+<div class="mt-3">
+    <a href="{% url 'app_folder:edit_group' group.id %}" class="btn btn-primary">編集</a>
+    <a href="{% url 'app_folder:home' %}" class="btn btn-secondary">戻る</a>
+</div>
 
-<!-- 編集ボタン -->
-<a href="{% url 'app_folder:edit_group' group.id %}" class="btn btn-primary">編集</a>
-<a href="{% url 'app_folder:home' %}">戻る</a>
-<a href="{% url 'app_folder:photograph' %}">撮影</a>
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const preview = document.getElementById('preview');
+  const captureButton = document.getElementById('capture-button');
+  const retryButton = document.getElementById('retry-button');
+  const extractButton = document.getElementById('extract-button');
+  const resultDiv = document.getElementById('result');
+  const form = document.getElementById('split-calculation-form');
+  const context = canvas.getContext('2d');
+  let stream = null;
+
+  // カメラを起動
+  const startCamera = () => {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(cameraStream => {
+        stream = cameraStream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+        preview.style.display = 'none';
+        retryButton.style.display = 'none';
+        extractButton.style.display = 'none';
+        captureButton.style.display = 'inline-block';
+        resultDiv.innerHTML = '';
+      })
+      .catch(error => {
+        console.error("カメラのアクセスに失敗しました:", error);
+      });
+  };
+
+  // カメラを停止
+  const stopCamera = () => {
+    if (stream) {
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+      stream = null;
+    }
+  };
+
+  // カメラ表示トグル
+  const toggleCamera = () => {
+    document.querySelector('.camera-container').style.display = 'block';
+    document.getElementById('show-camera-button').style.display = 'none';
+    startCamera();
+  };
+
+  // 撮影
+  captureButton.addEventListener('click', () => {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = canvas.toDataURL('image/jpeg');
+    preview.src = imageData;
+    video.style.display = 'none';
+    preview.style.display = 'block';
+    retryButton.style.display = 'inline-block';
+    extractButton.style.display = 'inline-block';
+    stopCamera();
+  });
+
+  // 再撮影
+retryButton.addEventListener('click', () => {
+    startCamera(); // カメラを再起動
+    preview.style.display = 'none'; // プレビュー画像を非表示
+    form.style.display = 'none'; // フォームを非表示
+    resetForm(); // フォームをリセット
+});
+
+// フォームのリセット関数
+const resetForm = () => {
+    const amountField = form.querySelector('input[name="amount"]');
+    const membersField = form.querySelector('input[name="members_count"]');
+    if (amountField) amountField.value = ''; // 合計金額フィールドをクリア
+    if (membersField) membersField.value = ''; // 人数フィールドをクリア
+};
+
+  // 文字抽出
+  extractButton.addEventListener('click', () => {
+    const imageData = canvas.toDataURL('image/jpeg');
+
+    fetch("{% url 'app_folder:photograph' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: new URLSearchParams({ 'image': imageData })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        resultDiv.innerHTML = `<h3>抽出された文字:</h3><pre>${data.extracted_text}</pre>`;
+        form.style.display = 'block'; // フォームを表示
+        const amountField = form.querySelector('input[name="amount"]');
+        if (amountField && data.total_amount) {
+          amountField.value = data.total_amount; // 合計金額を設定
+        }
+      } else {
+        alert(`エラー: ${data.message}`);
+      }
+    })
+    .catch(error => console.error('エラー:', error));
+  });
+</script>
 
 {% endblock %}
-
