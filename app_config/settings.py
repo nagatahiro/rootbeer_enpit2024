@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-
+from google.cloud import storage
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -134,8 +134,29 @@ LOGIN_URL = "app_folder:login"      ### 追加
 LOGIN_REDIRECT_URL = "app_folder:home"      ### 追加
 LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
-def set_google_credentials(credentials_path):
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+## os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/ooishikonryouma/Downloads/key.json" ##＃追加
 
-# 使用例
-set_google_credentials("/path/to/your/key.json")  # ここを適切なパスに変更
+def download_api_key_from_gcs(bucket_name, source_blob_name, destination_file_name):
+    """
+    GCSバケットからAPIキーをダウンロードする。
+    
+    Args:
+        bucket_name (str): GCSバケット名
+        source_blob_name (str): GCS内のファイルパス
+        destination_file_name (str): ローカルに保存するパス
+    """
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+    blob.download_to_filename(destination_file_name)
+    print(f"Downloaded {source_blob_name} to {destination_file_name}.")
+
+GCS_BUCKET_NAME = "cloud_vision_api-key"
+GCS_API_KEY_PATH = "ocr-key.json"
+LOCAL_API_KEY_PATH = os.path.join(BASE_DIR, "ocr-key.json")
+
+# GCSからAPIキーを取得してローカルに保存
+download_api_key_from_gcs(GCS_BUCKET_NAME, GCS_API_KEY_PATH, LOCAL_API_KEY_PATH)
+
+# 環境変数を設定
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LOCAL_API_KEY_PATH
