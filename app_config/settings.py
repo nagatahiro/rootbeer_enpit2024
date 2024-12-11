@@ -134,4 +134,8 @@ LOGIN_URL = "app_folder:login"      ### 追加
 LOGIN_REDIRECT_URL = "app_folder:home"      ### 追加
 LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/ooishikonryouma/Downloads/key.json" ##＃追加
+def set_google_credentials(credentials_path):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+
+# 使用例
+set_google_credentials("/path/to/your/key.json")  # ここを適切なパスに変更
