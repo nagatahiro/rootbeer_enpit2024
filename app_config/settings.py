@@ -155,8 +155,27 @@ GCS_BUCKET_NAME = "cloud_vision_api-key"
 GCS_API_KEY_PATH = "ocr-key.json"
 LOCAL_API_KEY_PATH = os.path.join(BASE_DIR, "ocr-key.json")
 
-# GCSからAPIキーを取得してローカルに保存
-download_api_key_from_gcs(GCS_BUCKET_NAME, GCS_API_KEY_PATH, LOCAL_API_KEY_PATH)
+# GCSからAPIキーを取得して環境変数に設定する関数を追加
+def set_api_key_from_gcs(bucket_name, source_blob_name):
+    """
+    GCSバケットからAPIキーを取得し、環境変数に設定する。
+    
+    Args:
+        bucket_name (str): GCSバケット名
+        source_blob_name (str): GCS内のファイルパス
+    """
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+    
+    # 一時ファイルにダウンロード
+    with open("/tmp/ocr-key.json", "wb") as temp_file:
+        blob.download_to_file(temp_file)
+    
+    # 環境変数に設定
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/tmp/ocr-key.json"
 
-# 環境変数を設定
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LOCAL_API_KEY_PATH
+# GCSからAPIキーを取得して環境変数に設定
+set_api_key_from_gcs(GCS_BUCKET_NAME, GCS_API_KEY_PATH)
+
+# ここで、環境変数を使用してAPIキーを取得することができます
