@@ -1,0 +1,11 @@
+{% extends "app_folder/base.html" %}
+
+{% block content %}
+<h2>購入情報を追加</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">保存</button>
+</form>
+<a href="{% url 'app_folder:home' %}">戻る</a>
+{% endblock %}

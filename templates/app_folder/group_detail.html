@@ -13,6 +13,30 @@
 </ul>
 <p>メンバー数: {{ members_count }} 人</p>
 
+<h3>購入データ</h3>
+{% if purchases %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>購入者</th>
+            <th>金額</th>
+            <th>購入日</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for purchase in purchases %}
+        <tr>
+            <td>{{ purchase.purchaser.username }}</td>
+            <td>¥{{ purchase.amount }}</td>
+            <td>{{ purchase.date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>購入データがありません。</p>
+{% endif %}
+
 <!-- カメラ機能 -->
 <div class="camera-container mt-4" style="display: none;">
     <video id="video" width="640" height="480" autoplay></video>
@@ -108,20 +132,20 @@
   });
 
   // 再撮影
-retryButton.addEventListener('click', () => {
-    startCamera(); // カメラを再起動
-    preview.style.display = 'none'; // プレビュー画像を非表示
-    form.style.display = 'none'; // フォームを非表示
-    resetForm(); // フォームをリセット
-});
+  retryButton.addEventListener('click', () => {
+    startCamera();
+    preview.style.display = 'none';
+    form.style.display = 'none';
+    resetForm();
+  });
 
-// フォームのリセット関数
-const resetForm = () => {
+  // フォームのリセット関数
+  const resetForm = () => {
     const amountField = form.querySelector('input[name="amount"]');
     const membersField = form.querySelector('input[name="members_count"]');
-    if (amountField) amountField.value = ''; // 合計金額フィールドをクリア
-    if (membersField) membersField.value = ''; // 人数フィールドをクリア
-};
+    if (amountField) amountField.value = '';
+    if (membersField) membersField.value = '';
+  };
 
   // 文字抽出
   extractButton.addEventListener('click', () => {
@@ -139,10 +163,10 @@ const resetForm = () => {
     .then(data => {
       if (data.status === 'success') {
         resultDiv.innerHTML = `<h3>抽出された文字:</h3><pre>${data.extracted_text}</pre>`;
-        form.style.display = 'block'; // フォームを表示
+        form.style.display = 'block';
         const amountField = form.querySelector('input[name="amount"]');
         if (amountField && data.total_amount) {
-          amountField.value = data.total_amount; // 合計金額を設定
+          amountField.value = data.total_amount;
         }
       } else {
         alert(`エラー: ${data.message}`);
