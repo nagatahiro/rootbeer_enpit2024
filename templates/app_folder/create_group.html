@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block title %}グループ作成{% endblock %}
 
 {% block contents %}
@@ -40,10 +41,22 @@
       <ul>
           {% for result in search_results %}
           <li>
-              <input type="checkbox" name="invited_users" value="{{ result.id }}"> {{ result.username }}
+              <input type="checkbox" name="invited_users" value="{{ result.id }}"
+              {% if result.id|stringformat:"s" in selected_users %}checked{% endif %}
+              > 
+              {{ result.username }}
           </li>
           {% endfor %}
       </ul>
+
+      <h3>選択済みユーザー</h3>
+        <ul>
+            {% for user_id in selected_users %}
+            <li>
+                {{ user_id|get_user_username }} <!-- カスタムフィルタでIDからユーザー名を取得 -->
+            </li>
+            {% endfor %}
+        </ul>
   
       <button type="submit" name="action" value="create" class="btn btn-success">作成</button>
   </form>  
