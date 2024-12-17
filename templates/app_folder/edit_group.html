@@ -44,4 +44,16 @@
     <p>該当するユーザーが見つかりませんでした。</p>
 {% endif %}
 
-<a href="{% url 'app_folder:group_detail' group.id %}">戻る</a>
+<div style="display: inline-block; margin-right: 10px;">
+    <a href="{% url 'app_folder:group_detail' group.id %}" class="btn btn-secondary">戻る</a>
+</div>
+<div style="display: inline-block;">
+    <form method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" name="delete_group" class="btn btn-secondary"
+                onclick="return confirm('グループを消去しますか？');">
+            グループ消去
+        </button>
+    </form>
+</div>
+

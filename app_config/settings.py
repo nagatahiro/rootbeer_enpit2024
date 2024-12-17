@@ -134,4 +134,4 @@ LOGIN_URL = "app_folder:login"      ### 追加
 LOGIN_REDIRECT_URL = "app_folder:home"      ### 追加
 LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/ooishikonryouma/Downloads/key.json" ##＃追加
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/kubotakeshi/Downloads/ocr-key.json" ##＃追加

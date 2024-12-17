@@ -89,9 +89,11 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         # セッションから検索結果と現在のグループ名を取得してコンテキストに渡す
         search_results = self.request.session.pop('search_results', [])
-        current_group_name = self.request.session.pop('current_group_name', '')
+        current_group_name = self.request.session.get('current_group_name', '')
+        selected_users = self.request.session.get('selected_users', [])
         context['search_results'] = search_results
         context['current_group_name'] = current_group_name
+        context['selected_users'] = selected_users
         return context
 
     def post(self, request, *args, **kwargs):
@@ -101,6 +103,14 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
             # ユーザー検索処理
             search_query = request.POST.get('search_user', '').strip()
             group_name = request.POST.get('group_name', '').strip()
+
+            # セッションから選択済みユーザーを取得
+            selected_users = self.request.session.get('selected_users', [])
+
+            # 新たに選択されたユーザーを追加
+            new_selected_users = request.POST.getlist('invited_users')
+            selected_users = list(set(selected_users + new_selected_users))  # 重複を排除
+            self.request.session['selected_users'] = selected_users
 
             # グループ名をセッションに保存
             request.session['current_group_name'] = group_name
@@ -125,12 +135,18 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
 
             if group_name:
                 # グループを作成
-                group, created = CustomGroup.objects.get_or_create(name=group_name, owner=request.user)
+                group = CustomGroup.objects.create(name=group_name, owner=request.user)
+
+                group.members.add(request.user)
 
                 if invited_users_ids:
                     invited_users = User.objects.filter(id__in=invited_users_ids)
                     group.members.add(*invited_users)
                     print(f"招待されたユーザー: {[user.username for user in invited_users]}")
+                
+                # セッションをクリア
+                self.request.session.pop('selected_users', None)
+                self.request.session.pop('current_group_name', None)
 
                 messages.success(request, f"グループ '{group_name}' を作成しました。")
             else:
@@ -233,6 +249,15 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
         if remove_members_ids:
             remove_members = User.objects.filter(id__in=remove_members_ids)
             group.members.remove(*remove_members)
+        
+        # グループ消去処理
+        if 'delete_group' in request.POST:
+            if request.user == group.owner:  # 所有者のみ消去可能
+                group.delete()
+                messages.success(request, "グループが消去されました。")
+                return redirect('app_folder:home')
+            else:
+                messages.error(request, "グループの消去権限がありません。")
 
         return redirect('app_folder:group_detail', group_id=group_id)
 
@@ -247,10 +272,11 @@ class PhotographView(View):
     def extract_total_amount(self, text):
         """レシートテキストから合計金額を抽出する"""
         import re
-        pattern = r'合計\s*¥(\d+)'
+        pattern = r'合計\s¥(\d+(,\d+))'
         match = re.search(pattern, text)
         if match:
-            return int(match.group(1))  # 数値として返す
+            total_amount = match.group(1).replace(',', '')
+            return int(total_amount)  # 数値として返す
         return None
 
     def post(self, request, *args, **kwargs):
