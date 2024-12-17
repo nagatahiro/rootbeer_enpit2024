@@ -2,7 +2,9 @@
 {% block title %}{{ group.name }}{% endblock %}
 
 {% block contents %}
-<h2>グループ編集: {{ group.name }}</h2>
+<div class="group-name-container mb-4">
+    <h2 class="group-name">{{ group.name }}</h2>
+  </div>
 
 <h3>現在のメンバー</h3>
 <form method="post">

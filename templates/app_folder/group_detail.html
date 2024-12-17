@@ -1,11 +1,29 @@
 {% extends "base.html" %}
 {% block title %}{{ group.name }}{% endblock %}
-
 {% block contents %}
-<h2>グループ: {{ group.name }}</h2>
-<p>グループの所有者: {{ group.owner.username }}</p>
+<style>
+  .group-name-container {
+      border: 2px solid #007bff; /* 枠の色（青色） */
+      border-radius: 8px;        /* 枠の角丸 */
+      padding: 10px;             /* 内側の余白 */
+      background-color: #f8f9fa; /* 背景色（薄いグレー） */
+      display: inline-block;     /* 枠の幅をコンテンツに合わせる */
+  }
+  
+  .group-name {
+      margin: 0;                 /* 見出しの余白をゼロに */
+      color: #333;               /* 文字色 */
+      font-size: 1.5rem;         /* 文字サイズ */
+      font-weight: bold;         /* 太字 */
+  }
+  </style>
 
-<h3>支払う人を選択してください</h3>
+
+<div class="group-name-container mb-4">
+  <h2 class="group-name">{{ group.name }}</h2>
+</div>
+
+<h3>支払い</h3>
 <select name="selected_member">
   {% for member in members %}
   <option value="{{ member.id }}">{{ member.username }}</option>
@@ -39,6 +57,10 @@
 
 <!-- 計算結果を表示 -->
 {% if result is not None %}
+    <h4>記録日時: {{ group.created_at|date:"Y/m/d H:i:s" }}</h4>
+    <h4>店名: {{ store_name }}</h4>
+    <h4>支払う人: {{ selected_member.username }}</h4>
+    <h4>合計金額: {{ result.total_amount|floatformat:2 }}円</h4>
     <h4>1人あたりの金額: {{ result|floatformat:2 }}円</h4>
 {% endif %}
 

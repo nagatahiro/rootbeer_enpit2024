@@ -344,6 +344,13 @@ class PhotographView(View):
             if total_amount is not None:
                 request.session['total_amount'] = total_amount
 
+             # グループIDを取得して保存処理を行う
+            group_id = request.POST.get('group_id')  # フォームからグループIDを送信する必要あり
+            if group_id and store_name:
+                group = CustomGroup.objects.get(id=group_id)
+                group.store_name = store_name
+                group.save()
+
             # レスポンスデータの作成
             response_data = {
                 'status': 'success',
