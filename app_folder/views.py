@@ -280,6 +280,36 @@ class PhotographView(View):
             return int(total_amount)  # 数値として返す
         return None
 
+    def extract_store_name(self, text_annotations, checking_line_num=5):
+        """
+        テキストの縦幅順にソートして店名を抽出する
+        特定の無関係なキーワードを回避
+        """
+        def calc_bbox_height(bounding_box):
+            """バウンディングボックスの高さを計算する"""
+            y_coords = [vertex.y for vertex in bounding_box.vertices]
+            return max(y_coords) - min(y_coords)
+
+        heights_and_texts = []
+
+        # 上からN行のデータを評価
+        for annotation in text_annotations[:checking_line_num]:
+            description = annotation.description
+            bounding_box = annotation.bounding_poly
+
+            # 縦幅の計算
+            height = calc_bbox_height(bounding_box)
+            heights_and_texts.append([height, description])
+
+        # 縦幅順にソート（降順）
+        sorted_texts = sorted(heights_and_texts, key=lambda x: x[0], reverse=True)
+
+        # 最も縦幅が大きい候補を取得し、無関係なキーワードを回避
+        biggest_text = sorted_texts[0][1]
+        if "領収" in biggest_text or "クレジット" in biggest_text or "決済" in biggest_text:
+            return sorted_texts[1][1]  # 2番目に大きいテキストを返す
+        return biggest_text
+
     def post(self, request, *args, **kwargs):
         try:
             # リクエストから画像データを取得
@@ -293,14 +323,10 @@ class PhotographView(View):
 
             # Google Cloud Vision API クライアントの初期化
             client = vision.ImageAnnotatorClient()
-
-            # Vision API 用の画像オブジェクト作成
             image = vision.Image(content=image_bytes)
 
             # テキスト認識をリクエスト
             response = client.text_detection(image=image)
-
-            # 抽出されたテキスト
             texts = response.text_annotations
             if not texts:
                 return JsonResponse({
@@ -309,29 +335,23 @@ class PhotographView(View):
                 })
 
             extracted_text = texts[0].description
-            
-            # 合計金額を抽出
+
+            # 店名と合計金額を抽出
+            store_name = self.extract_store_name(texts[1:])  # バウンディングボックス付きテキストを渡す
             total_amount = self.extract_total_amount(extracted_text)
             
+            # 合計金額をセッションに保存（オプション）
             if total_amount is not None:
-            # 合計金額をセッションに保存
                 request.session['total_amount'] = total_amount
 
             # レスポンスデータの作成
             response_data = {
                 'status': 'success',
+                'store_name': store_name,  # 追加: 店名
                 'extracted_text': extracted_text,
                 'total_amount': total_amount,
                 'formatted_total': f'¥{total_amount}' if total_amount is not None else None
             }
-            
-            # ここで必要に応じてデータベースに保存などの処理を追加できます
-            # 例：
-            # Receipt.objects.create(
-            #     total_amount=total_amount,
-            #     raw_text=extracted_text,
-            #     # その他必要なフィールド
-            # )
 
             return JsonResponse(response_data)
 

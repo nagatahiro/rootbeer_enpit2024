@@ -144,6 +144,8 @@ const resetForm = () => {
         if (amountField && data.total_amount) {
           amountField.value = data.total_amount; // 合計金額を設定
         }
+        const storeName = data.store_name; // 追加: 店名を取得
+        resultDiv.innerHTML += `<h3>店名:</h3><pre>${storeName}</pre>`; // 追加: 店名を表示
       } else {
         alert(`エラー: ${data.message}`);
       }
