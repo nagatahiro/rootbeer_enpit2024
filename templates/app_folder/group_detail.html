@@ -5,12 +5,12 @@
 <h2>グループ: {{ group.name }}</h2>
 <p>グループの所有者: {{ group.owner.username }}</p>
 
-<h3>支払う人</h3>
-<ul>
-    {% for member in members %}
-    <li>{{ member.username }}</li>
-    {% endfor %}
-</ul>
+<h3>支払う人を選択してください</h3>
+<select name="selected_member">
+  {% for member in members %}
+  <option value="{{ member.id }}">{{ member.username }}</option>
+  {% endfor %}
+</select>
 <p>メンバー数: {{ members.count }} 人</p>
 
 <!-- カメラ機能 -->
