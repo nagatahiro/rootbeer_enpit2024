@@ -5,13 +5,13 @@
 <h2>グループ: {{ group.name }}</h2>
 <p>グループの所有者: {{ group.owner.username }}</p>
 
-<h3>メンバー</h3>
+<h3>支払う人</h3>
 <ul>
     {% for member in members %}
     <li>{{ member.username }}</li>
     {% endfor %}
 </ul>
-<p>メンバー数: {{ members_count }} 人</p>
+<p>メンバー数: {{ members.count }} 人</p>
 
 <!-- カメラ機能 -->
 <div class="camera-container mt-4" style="display: none;">

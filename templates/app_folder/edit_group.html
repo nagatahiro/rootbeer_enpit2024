@@ -1,3 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+
+{% block contents %}
 <h2>グループ編集: {{ group.name }}</h2>
 
 <h3>現在のメンバー</h3>
@@ -27,21 +31,23 @@
 </form>
 
 <!-- 検索結果 -->
-{% if search_results %}
-    <form method="post">
-        {% csrf_token %}
-        <ul>
-            {% for user in search_results %}
-            <li>
-                <input type="checkbox" name="new_members" value="{{ user.id }}">
-                {{ user.username }} 
-            </li>
-            {% endfor %}
-        </ul>
-        <button type="submit">選択したユーザーを追加</button>
-    </form>
-{% else %}
-    <p>該当するユーザーが見つかりませんでした。</p>
+{% if search_query %}
+    {% if search_results %}
+        <form method="post">
+            {% csrf_token %}
+            <ul>
+                {% for user in search_results %}
+                <li>
+                    <input type="checkbox" name="new_members" value="{{ user.id }}">
+                    {{ user.username }} 
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="submit">選択したユーザーを追加</button>
+        </form>
+    {% else %}
+        <p>該当するユーザーが見つかりませんでした。</p>
+    {% endif %}
 {% endif %}
 
 <div style="display: inline-block; margin-right: 10px;">
@@ -57,3 +63,4 @@
     </form>
 </div>
 
+{% endblock %}

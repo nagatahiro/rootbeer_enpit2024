@@ -230,8 +230,9 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
                 Q(username__icontains=search_query) | Q(email__icontains=search_query)
             ).exclude(id__in=group.members.all())
         else:
-            context['search_results'] = []
-        
+            context['search_results'] = None
+
+        context['search_query'] = search_query
         return context
 
     def post(self, request, *args, **kwargs):
