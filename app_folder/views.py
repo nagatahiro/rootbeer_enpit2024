@@ -135,7 +135,7 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
 
             if group_name:
                 # グループを作成
-                group, created = CustomGroup.objects.get_or_create(name=group_name, owner=request.user)
+                group = CustomGroup.objects.create(name=group_name, owner=request.user)
 
                 group.members.add(request.user)
 
