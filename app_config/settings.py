@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7+_vo%2fis!0r!%91lgll+a)hengbi6*lg0v-(-fa1l8fd+jq5'
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -134,4 +137,4 @@ LOGIN_URL = "app_folder:login"      ### 追加
 LOGIN_REDIRECT_URL = "app_folder:home"      ### 追加
 LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/kubotakeshi/Downloads/ocr-key.json" ##＃追加
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ##＃追加
