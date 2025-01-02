@@ -11,7 +11,7 @@ services:
       - .:/code
       - ~/.config:/root/.config:ro
       - ../key.json:/code/key.json
-      - /etc/letsencrypt/:/etc/letsencrypt:ro
+      - ~/etc/letsencrypt/:/etc/letsencrypt:ro
     expose:
       - "8000"
     env_file:
