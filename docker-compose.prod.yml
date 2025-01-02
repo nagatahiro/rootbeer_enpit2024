@@ -1,43 +1,30 @@
 services:
   app:
     container_name: app
-
     build:
       context: .
       dockerfile: ./containers/django/Dockerfile
-
     environment:    
       - DJANGO_SETTINGS_MODULE=app_config.settings
-      - GOOGLE_APPLICATION_CREDENTIALS=/code/key.json 
-
-
-
+      - GOOGLE_APPLICATION_CREDENTIALS=/code/key.json
     volumes:
       - .:/code
       - ~/.config:/root/.config:ro
       - ../key.json:/code/key.json
-
     expose:
-      - "8000"                                     
-
-       
+      - "8000"
     env_file:
       - ../.env
+    command: sh -c "/usr/local/bin/entrypoint.sh"
 
-    command: sh -c "/usr/local/bin/entrypoint.sh" 
-  
-  web:                                             # << 追加
-    container_name: web                            # << 追加
-
-    build:                                         # << 追加
-      context: .                                   # << 追加
-      dockerfile: ./containers/nginx/Dockerfile    # << 追加
-
-    volumes:                                       # << 追加
-      - ./static:/static                           # << 追加
-
-    ports:                                         # << 追加
-      - "80:80"                                    # << 追加
-
-    depends_on:                                    # << 追加
-      - app                                        # << 追加
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: ./containers/nginx/Dockerfile
+    volumes:
+      - ./static:/static
+    ports:
+      - "80:80"
+    depends_on:
+      - app
