@@ -31,7 +31,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ '127.0.0.1','waripoke.st.ie.u-ryukyu.ac.jp','https://waripoke.st.ie.u-ryukyu.ac.jp','http://waripoke.st.ie.u-ryukyu.ac.jp','http://waripoke.xyz','https://waripoke.xyz','http://162.43.90.122']
+ALLOWED_HOSTS = [ '127.0.0.1','localhost','waripoke.st.ie.u-ryukyu.ac.jp','https://waripoke.st.ie.u-ryukyu.ac.jp','http://waripoke.st.ie.u-ryukyu.ac.jp','http://waripoke.xyz','https://waripoke.xyz','http://162.43.90.122']
 
 
 # Application definition
