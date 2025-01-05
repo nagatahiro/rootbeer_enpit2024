@@ -165,26 +165,42 @@ class AddFriendPageView(LoginRequiredMixin, TemplateView):
         print(f"フレンド '{friend_name}' を追加しました。")
         return redirect('app_folder:home')
     
-from decimal import Decimal
+# from decimal import Decimal
+# class GroupDetailView(LoginRequiredMixin, TemplateView):
+#     template_name = "app_folder/group_detail.html"
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         group_id = self.kwargs.get('group_id')
+#         group = get_object_or_404(CustomGroup, id=group_id)
+#         members_count = group.members.count()  # メンバー数を取得
+
+#         # セッションから合計金額を取得
+#         total_amount = self.request.session.pop('total_amount', None)
+
+#         # フォームの初期値として合計金額を設定
+#         context['form'] = SplitBillForm(initial={
+#             'amount': total_amount,
+#             'members_count': members_count
+#         })
+#         context['group'] = group
+#         context['members'] = group.members.all()
+#         context['result'] = self.request.session.pop('result', None)  # 計算結果をセッションから取得
+#         return context
+
+from django.views.generic import TemplateView
+from django.shortcuts import get_object_or_404
+
 class GroupDetailView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/group_detail.html"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(CustomGroup, id=group_id)
-        members_count = group.members.count()  # メンバー数を取得
+        purchases = group.purchases.all()  # グループに関連付けられた購入データ
 
-        # セッションから合計金額を取得
-        total_amount = self.request.session.pop('total_amount', None)
-
-        # フォームの初期値として合計金額を設定
-        context['form'] = SplitBillForm(initial={
-            'amount': total_amount,
-            'members_count': members_count
-        })
         context['group'] = group
-        context['members'] = group.members.all()
-        context['result'] = self.request.session.pop('result', None)  # 計算結果をセッションから取得
+        context['purchases'] = purchases
         return context
 
 
@@ -339,3 +355,26 @@ class PhotographView(View):
 
 # EditGroupViewをedit_groupとしてエクスポート
 edit_group = EditGroupView.as_view()
+
+
+#追加↓
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
+from .models import Purchase
+from .forms import PurchaseForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class AddPurchaseView(LoginRequiredMixin, CreateView):
+    model = Purchase
+    form_class = PurchaseForm
+    template_name = "app_folder/add_purchase.html"
+    success_url = reverse_lazy('app_folder:home')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # 現在のユーザーをフォームに渡す
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.purchaser = self.request.user  # 購入者をログイン中のユーザーに設定
+        return super().form_valid(form)
