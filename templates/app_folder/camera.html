@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}撮影ページ{% endblock %}
 {% block contents %}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 <div class="container mt-5">
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
     <div class="container-fluid">
@@ -116,8 +117,9 @@
   
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const imageData = canvas.toDataURL('image/jpeg', 1.0);  // 画質を最大（1.0）に設定
-    console.log(imageData); 
+    const imageData = canvas.toDataURL('image/jpeg', 1.0);
+
+    console.log('送信する画像データ:', imageData); // 保存ボタンを押した際のデバッグ
 
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
@@ -132,20 +134,18 @@
     })
     .then(response => response.json())
     .then(data => {
+        console.log('サーバーからのレスポンス:', data); // サーバーのレスポンス確認
         if (data.status === 'success') {
-            const storeName = data.store_name || "";
-            const totalAmount = data.formatted_total || "";
-
-            // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
-            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
+            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(data.store_name) + "&total_amount=" + encodeURIComponent(data.formatted_total);
         } else {
             alert(`エラー: ${data.message}`);
         }
     })
     .catch(error => {
-        console.error('エラー:', error);
+        console.error('通信エラー:', error); // エラー内容のデバッグ
         alert('処理中にエラーが発生しました。');
     });
 });
+
 </script>
 {% endblock %}
