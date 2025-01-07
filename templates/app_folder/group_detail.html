@@ -11,7 +11,7 @@
       <ul class="navbar-nav ms-auto d-flex flex-row">
         <li class="nav-item">
           <a href="{% url 'app_folder:edit_group' group.id %}" id="edit-icon" class="btn btn-link" style="font-size: 1.5rem; color: white;">
-            <i class="fas fa-edit"></i> 
+            <i class="fas fa-cog"></i> 
           </a>
         </li>
         <li class="nav-item">
@@ -66,15 +66,13 @@
   <p>※上記に表示されいる値はデモです。</p>
 </div>
 
-
-
-
 <form action="{% url 'app_folder:shooting_registration' group.id %}" method="POST" id="shooting-form">
   {% csrf_token %}
-  <button type="submit" class="btn btn-primary" style="position: fixed; bottom: 20px; right: 20px; font-size: 2rem; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
-    <i class="fas fa-plus" style="color: white;"></i>
+  <button type="submit" class="btn btn-primary" style="position: fixed; bottom: 20px; right: 20px; font-size: 2rem; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: cadetblue; border: none;">
+    <i class="fas fa-pen" style="color: white;"></i>
   </button>
 </form>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
