@@ -7,7 +7,7 @@
       <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
         <i class="fas fa-arrow-left"></i> 
       </button>
-      <span class="navbar-brand" style="color: white;">{{ group.name }} ({{ members_count }})</span>
+      <span class="navbar-brand" style="color: white;">{{ group.name }} ({{ members.count }})</span>
       <ul class="navbar-nav ms-auto d-flex flex-row">
         <li class="nav-item">
           <a href="{% url 'app_folder:edit_group' group.id %}" id="edit-icon" class="btn btn-link" style="font-size: 1.5rem; color: white;">
@@ -44,7 +44,7 @@
         
         <!-- メンバーリスト -->
         <div>
-          <h5 class="text-muted">メンバー({{ members_count }}人)</h5>
+          <h5 class="text-muted">メンバー({{ members.count }}人)</h5>
           <ul class="list-group" style="border-radius: 10px;">
               {% for member in members %}
                   <li class="list-group-item" style="border: none; padding: 10px 15px;">
@@ -57,32 +57,25 @@
 </section>
 
 
-    
+<!-- 完成イメージ -->
+<div class="text-center" style="margin-top: 20px;">
+  <h5 class="text-muted">あなたの支払額は</h5>
+  <h2 id="payment-amount" class="text-success" style="font-size: 2.5rem; font-weight: bold;">-100円</h2> <!-- 支払額の表示部分 -->
+  <p>上記に表示されいる値はデモです。</p>
+</div>
 
 
-<h3>購入データ</h3>
-{% if purchases %}
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>購入者</th>
-            <th>金額</th>
-            <th>購入日</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for purchase in purchases %}
-        <tr>
-            <td>{{ purchase.purchaser.username }}</td>
-            <td>¥{{ purchase.amount }}</td>
-            <td>{{ purchase.date }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>購入データがありません。</p>
-{% endif %}
+
+
+<div class="form-group">
+  <label for="selectedMember" class="h5">支払いする人</label>
+  <select id="selectedMember" name="selected_member" class="form-control">
+    {% for member in members %}
+    <option value="{{ member.id }}">{{ member.username }}</option>
+    {% endfor %}
+  </select>
+</div>
+
 
 <!-- カメラ機能 -->
 <div class="camera-container mt-4" style="display: none;">
@@ -102,15 +95,28 @@
 
 <!-- 割り勘計算フォーム -->
 <form id="split-calculation-form" method="post" style="display: none; margin-top: 20px;">
-    <h4>料金計算</h4>
     {% csrf_token %}
+    <h3>支払いする人</h3>
+    <select name="selected_member" required>
+        {% for member in members %}
+        <option value="{{ member.id }}">{{ member.username }}</option>
+        {% endfor %}
+    </select>
+
+    <h4>料金計算</h4>
     {{ form.as_p }}
     <button type="submit" class="btn btn-success">計算</button>
 </form>
 
 <!-- 計算結果を表示 -->
 {% if result is not None %}
-    <h4>1人あたりの金額: {{ result|floatformat:2 }}円</h4>
+    <div class="calculation-result mt-4">
+        <h4>記録日時: {{ group.created_at|date:"Y/m/d H:i:s" }}</h4>
+        <h4>店名: {{ store_name|default:"不明" }}</h4>
+        <h4>支払う人: {{ selected_member.username|default:"未選択" }}</h4>
+        <h4>合計金額: ¥{{ total_amount|floatformat:2|default:"0.00" }}</h4>
+        <h4>1人あたりの金額: ¥{{ result|floatformat:2 }}</h4>
+    </div>
 {% endif %}
 
 
@@ -192,47 +198,83 @@
   });
 
   // 再撮影
-  retryButton.addEventListener('click', () => {
-    startCamera();
-    preview.style.display = 'none';
-    form.style.display = 'none';
-    resetForm();
-  });
+retryButton.addEventListener('click', () => {
+    startCamera(); // カメラを再起動
+    preview.style.display = 'none'; // プレビュー画像を非表示
+    form.style.display = 'none'; // フォームを非表示
+    resetForm(); // フォームをリセット
+});
 
-  // フォームのリセット関数
-  const resetForm = () => {
+// フォームのリセット関数
+const resetForm = () => {
     const amountField = form.querySelector('input[name="amount"]');
     const membersField = form.querySelector('input[name="members_count"]');
-    if (amountField) amountField.value = '';
-    if (membersField) membersField.value = '';
-  };
+    if (amountField) amountField.value = ''; // 合計金額フィールドをクリア
+    if (membersField) membersField.value = ''; // 人数フィールドをクリア
+};
 
   // 文字抽出
   extractButton.addEventListener('click', () => {
     const imageData = canvas.toDataURL('image/jpeg');
 
     fetch("{% url 'app_folder:photograph' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': '{{ csrf_token }}',
-      },
-      body: new URLSearchParams({ 'image': imageData })
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: new URLSearchParams({
+            'image': imageData,
+            'group_id': '{{ group.id }}'
+        })
     })
     .then(response => response.json())
     .then(data => {
-      if (data.status === 'success') {
-        resultDiv.innerHTML = `<h3>抽出された文字:</h3><pre>${data.extracted_text}</pre>`;
-        form.style.display = 'block';
-        const amountField = form.querySelector('input[name="amount"]');
-        if (amountField && data.total_amount) {
-          amountField.value = data.total_amount;
+        if (data.status === 'success') {
+            let resultHTML = '';
+            
+            // 抽出されたテキストを表示
+            resultHTML += `<h3>抽出されたテキスト:</h3><pre>${data.extracted_text}</pre>`;
+            
+            // 店名を表示
+            const storeName = data.store_name || '店名を抽出できませんでした';
+            resultHTML += `<h3>店名:</h3><pre>${storeName}</pre>`;
+            
+            // 合計金額を表示
+            resultHTML += `<h3>合計金額:</h3><pre>${data.formatted_total || '合計金額を抽出できませんでした'}</pre>`;
+            
+            resultDiv.innerHTML = resultHTML;
+            
+            // フォームを表示して値を設定
+            form.style.display = 'block';
+            const amountField = form.querySelector('input[name="amount"]');
+            if (amountField && data.total_amount) {
+                amountField.value = data.total_amount;
+            }
+            
+            // メンバー数を設定
+            const membersField = form.querySelector('input[name="members_count"]');
+            if (membersField) {
+                membersField.value = '{{ members.count }}';
+            }
+
+            // 店名をhiddenフィールドとしてフォームに追加
+            let storeNameInput = form.querySelector('input[name="store_name"]');
+            if (!storeNameInput) {
+                storeNameInput = document.createElement('input');
+                storeNameInput.type = 'hidden';
+                storeNameInput.name = 'store_name';
+                form.appendChild(storeNameInput);
+            }
+            storeNameInput.value = data.store_name || '';
+        } else {
+            alert(`エラー: ${data.message}`);
         }
-      } else {
-        alert(`エラー: ${data.message}`);
-      }
     })
-    .catch(error => console.error('エラー:', error));
+    .catch(error => {
+        console.error('エラー:', error);
+        alert('処理中にエラーが発生しました。');
+    });
   });
 
   //ハンバーガーバー

@@ -82,33 +82,44 @@ class SignUp(CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
 class CreateGroupView(LoginRequiredMixin, TemplateView):
+    """グループ作成ページ"""
     template_name = "app_folder/create_group.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['search_results'] = self.request.session.pop('search_results', [])
-        context['current_group_name'] = self.request.session.get('current_group_name', '')
-        context['selected_users'] = self.request.session.get('selected_users', [])
+        # セッションから検索結果と現在のグループ名を取得してコンテキストに渡す
+        search_results = self.request.session.pop('search_results', [])
+        current_group_name = self.request.session.get('current_group_name', '')
+        selected_users = self.request.session.get('selected_users', [])
+        context['search_results'] = search_results
+        context['current_group_name'] = current_group_name
+        context['selected_users'] = selected_users
         return context
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
 
-        # 検索処理
         if action == "search":
+            # ユーザー検索処理
             search_query = request.POST.get('search_user', '').strip()
             group_name = request.POST.get('group_name', '').strip()
+
+            # セッションから選択済みユーザーを取得
             selected_users = self.request.session.get('selected_users', [])
 
+            # 新たに選択されたユーザーを追加
             new_selected_users = request.POST.getlist('invited_users')
-            selected_users = list(set(selected_users + new_selected_users))
+            selected_users = list(set(selected_users + new_selected_users))  # 重複を排除
             self.request.session['selected_users'] = selected_users
-            self.request.session['current_group_name'] = group_name
+
+            # グループ名をセッションに保存
+            request.session['current_group_name'] = group_name
 
             if search_query:
+                # 検索結果を取得（自分以外のユーザーのみ表示）
                 search_results = list(
                     User.objects.filter(username__icontains=search_query)
-                    .exclude(id=request.user.id)
+                    .exclude(id=request.user.id)  # 自分自身を検索結果から除外
                     .values('id', 'username')
                 )
                 request.session['search_results'] = search_results
@@ -117,37 +128,32 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
 
             return redirect('app_folder:create_group')
 
-        # グループ作成処理
         elif action == "create":
+            # グループ作成処理
             group_name = request.POST.get('group_name', '').strip()
-            invited_users_ids = self.request.session.get('selected_users', [])
+            invited_users_ids = request.POST.getlist('invited_users')  # 招待するユーザーIDリスト
 
             if group_name:
                 # グループを作成
                 group = CustomGroup.objects.create(name=group_name, owner=request.user)
-                
-                # 自分を必ずグループのメンバーとして追加
+
                 group.members.add(request.user)
 
-                # 招待されたユーザーをグループに追加
                 if invited_users_ids:
                     invited_users = User.objects.filter(id__in=invited_users_ids)
                     group.members.add(*invited_users)
-
-                # 成功メッセージを表示
-                messages.success(request, f"グループ '{group_name}' を作成しました。")
+                    print(f"招待されたユーザー: {[user.username for user in invited_users]}")
                 
-                # セッションデータをクリア
+                # セッションをクリア
                 self.request.session.pop('selected_users', None)
                 self.request.session.pop('current_group_name', None)
+
+                messages.success(request, f"グループ '{group_name}' を作成しました。")
             else:
                 messages.error(request, "グループ名を入力してください。")
 
             return redirect('app_folder:home')
         
-
-    
-
         
 
 class AddFriendPageView(LoginRequiredMixin, TemplateView):
@@ -159,47 +165,37 @@ class AddFriendPageView(LoginRequiredMixin, TemplateView):
         print(f"フレンド '{friend_name}' を追加しました。")
         return redirect('app_folder:home')
     
-# from decimal import Decimal
-# class GroupDetailView(LoginRequiredMixin, TemplateView):
-#     template_name = "app_folder/group_detail.html"
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         group_id = self.kwargs.get('group_id')
-#         group = get_object_or_404(CustomGroup, id=group_id)
-#         members_count = group.members.count()  # メンバー数を取得
-
-#         # セッションから合計金額を取得
-#         total_amount = self.request.session.pop('total_amount', None)
-
-#         # フォームの初期値として合計金額を設定
-#         context['form'] = SplitBillForm(initial={
-#             'amount': total_amount,
-#             'members_count': members_count
-#         })
-#         context['group'] = group
-#         context['members'] = group.members.all()
-#         context['result'] = self.request.session.pop('result', None)  # 計算結果をセッションから取得
-#         return context
-
-from django.views.generic import TemplateView
-from django.shortcuts import get_object_or_404
-
+from decimal import Decimal
 class GroupDetailView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/group_detail.html"
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(CustomGroup, id=group_id)
-        members = group.members.all()  # グループのメンバー
-        purchases = group.purchases.all()  # グループに関連付けられた購入データ
+        members_count = group.members.count()
 
+        # セッションからデータを取得
+        total_amount = self.request.session.pop('total_amount', None)
+        store_name = self.request.session.pop('store_name', None)
+        selected_member_id = self.request.session.pop('selected_member_id', None)
+
+        # 選択されたメンバーの取得
+        selected_member = None
+        if selected_member_id:
+            selected_member = User.objects.filter(id=selected_member_id).first()
+
+        context['form'] = SplitBillForm(initial={
+            'amount': total_amount,
+            'members_count': members_count
+            
+        })
         context['group'] = group
-        context['purchases'] = purchases
-        context['members'] = members  # メンバーリストを追加
-        context['members_count'] = members.count()  # メンバー数を追加
+        context['members'] = group.members.all()
+        context['result'] = self.request.session.pop('result', None)
+        context['store_name'] = store_name
+        context['selected_member'] = selected_member
+        context['total_amount'] = total_amount
         return context
-
 
     def post(self, request, *args, **kwargs):
         group_id = self.kwargs.get('group_id')
@@ -209,9 +205,15 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             amount = form.cleaned_data['amount']
             members_count = form.cleaned_data['members_count']
+            selected_member_id = request.POST.get('selected_member')
+            store_name = request.session.get('store_name')
+
             if members_count > 0:
-                result = amount / Decimal(members_count)  # Decimalを使用
-                request.session['result'] = float(result)  # floatに変換して保存
+                result = amount / Decimal(members_count)
+                request.session['result'] = float(result)
+                request.session['total_amount'] = float(amount)
+                request.session['store_name'] = store_name
+                request.session['selected_member_id'] = selected_member_id
                 messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
             else:
                 messages.error(request, "人数を1以上にしてください。")
@@ -243,8 +245,9 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
                 Q(username__icontains=search_query) | Q(email__icontains=search_query)
             ).exclude(id__in=group.members.all())
         else:
-            context['search_results'] = []
-        
+            context['search_results'] = None
+
+        context['search_query'] = search_query
         return context
 
     def post(self, request, *args, **kwargs):
@@ -285,12 +288,73 @@ class PhotographView(View):
     def extract_total_amount(self, text):
         """レシートテキストから合計金額を抽出する"""
         import re
-        pattern = r'合計\s¥(\d+(,\d+))'
-        match = re.search(pattern, text)
-        if match:
-            total_amount = match.group(1).replace(',', '')
-            return int(total_amount)  # 数値として返す
+        # 複数のパターンを試す
+        patterns = [
+            r'合計\s*[¥￥]\s*(\d+(?:,\d+)?)',  # 合計 ¥1,727
+            r'食計\s*\d+点\s*[¥￥]\s*(\d+(?:,\d+)?)',  # 食計 3点 ¥1,727
+            r'小計\s*[¥￥]\s*(\d+(?:,\d+)?)'   # 小計 ¥1,727
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text)
+            if match:
+                # カンマを除去してから数値に変換
+                amount_str = match.group(1).replace(',', '')
+                try:
+                    return int(amount_str)
+                except ValueError:
+                    continue
+        
         return None
+
+    def extract_store_name(self, text_annotations, checking_line_num=5):
+        """
+        テキストの縦幅順にソートして店名を抽出する
+        特定の無関係なキーワードを回避
+        """
+        def calc_bbox_height(bounding_box):
+            """バウンディングボックスの高さを計算する"""
+            y_coords = [vertex.y for vertex in bounding_box.vertices]
+            return max(y_coords) - min(y_coords)
+
+        heights_and_texts = []
+        excluded_keywords = [
+            "領収", "クレジット", "決済", "TEL", "株式会社", 
+            "No", "店No", "伝票", "登録番号", "時間", "日付"
+        ]
+
+        # 上からN行のデータを評価
+        for annotation in text_annotations[:checking_line_num + 3]:  # 評価行数を増やす
+            description = annotation.description.strip()
+            
+            # 空文字列や数字のみの行をスキップ
+            if not description or description.isdigit():
+                continue
+            
+            # 除外キーワードを含む行をスキップ
+            if any(keyword in description for keyword in excluded_keywords):
+                continue
+
+            bounding_box = annotation.bounding_poly
+            height = calc_bbox_height(bounding_box)
+            
+            # 一定以上の高さがある行のみを候補とする
+            if height > 20:  # この閾値は調整が必要かもしれません
+                heights_and_texts.append([height, description])
+
+        # 縦幅順にソート（降順）
+        sorted_texts = sorted(heights_and_texts, key=lambda x: x[0], reverse=True)
+
+        # 最も適切な店名候補を返す
+        if sorted_texts:
+            # 最初の2つの候補から長い方を選択（より詳細な店名の可能性が高い）
+            if len(sorted_texts) >= 2:
+                first_candidate = sorted_texts[0][1]
+                second_candidate = sorted_texts[1][1]
+                return first_candidate if len(first_candidate) >= len(second_candidate) else second_candidate
+            return sorted_texts[0][1]
+
+        return None  # 適切な店名が見つからない場合はNoneを返す
 
     def post(self, request, *args, **kwargs):
         try:
@@ -305,14 +369,10 @@ class PhotographView(View):
 
             # Google Cloud Vision API クライアントの初期化
             client = vision.ImageAnnotatorClient()
-
-            # Vision API 用の画像オブジェクト作成
             image = vision.Image(content=image_bytes)
 
             # テキスト認識をリクエスト
             response = client.text_detection(image=image)
-
-            # 抽出されたテキスト
             texts = response.text_annotations
             if not texts:
                 return JsonResponse({
@@ -321,29 +381,24 @@ class PhotographView(View):
                 })
 
             extracted_text = texts[0].description
-            
-            # 合計金額を抽出
+
+            # 店名と合計金額を抽出
+            store_name = self.extract_store_name(texts[1:])
             total_amount = self.extract_total_amount(extracted_text)
             
+            # セッションに保存
+            request.session['store_name'] = store_name if store_name else None
             if total_amount is not None:
-            # 合計金額をセッションに保存
                 request.session['total_amount'] = total_amount
 
             # レスポンスデータの作成
             response_data = {
                 'status': 'success',
+                'store_name': store_name if store_name else None,
                 'extracted_text': extracted_text,
                 'total_amount': total_amount,
                 'formatted_total': f'¥{total_amount}' if total_amount is not None else None
             }
-            
-            # ここで必要に応じてデータベースに保存などの処理を追加できます
-            # 例：
-            # Receipt.objects.create(
-            #     total_amount=total_amount,
-            #     raw_text=extracted_text,
-            #     # その他必要なフィールド
-            # )
 
             return JsonResponse(response_data)
 
@@ -352,26 +407,3 @@ class PhotographView(View):
 
 # EditGroupViewをedit_groupとしてエクスポート
 edit_group = EditGroupView.as_view()
-
-
-#追加↓
-from django.views.generic.edit import CreateView
-from django.urls import reverse_lazy
-from .models import Purchase
-from .forms import PurchaseForm
-from django.contrib.auth.mixins import LoginRequiredMixin
-
-class AddPurchaseView(LoginRequiredMixin, CreateView):
-    model = Purchase
-    form_class = PurchaseForm
-    template_name = "app_folder/add_purchase.html"
-    success_url = reverse_lazy('app_folder:home')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # 現在のユーザーをフォームに渡す
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.purchaser = self.request.user  # 購入者をログイン中のユーザーに設定
-        return super().form_valid(form)
