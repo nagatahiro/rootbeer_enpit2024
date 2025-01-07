@@ -117,6 +117,7 @@
   // 文字抽出
   extractButton.addEventListener('click', () => {
     const imageData = canvas.toDataURL('image/jpeg', 1.0);  // 画質を最大（1.0）に設定
+    console.log(imageData); 
 
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',

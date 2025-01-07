@@ -71,6 +71,10 @@
   captureButton.addEventListener('click', () => {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = canvas.toDataURL('image/jpeg');
+
+    console.log(imageData); 
+
+    
     preview.src = imageData;
     video.style.display = 'none';
     canvas.style.display = 'none';
