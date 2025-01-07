@@ -1,19 +1,28 @@
 {% extends "base.html" %}
+
 {% block title %}撮影ページ{% endblock %}
 
 {% block contents %}
-<h1>撮影ページ</h1>
-<a href="{% url 'app_folder:home' %}">ホームに戻る</a>
+<div class="container">
+  <h1 class="text-center my-4">撮影ページ</h1>
+  <div class="d-flex justify-content-center">
+    <a href="{% url 'app_folder:home' %}" class="btn btn-secondary">ホームに戻る</a>
+  </div>
 
-<!-- 撮影とプレビューエリア -->
-<div class="camera-container">
-  <video id="video" width="640" height="480" autoplay></video>
-  <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
-  <img id="preview" width="640" height="480" style="display: none;" alt="撮影画像のプレビュー">
-  <button id="capture-button" class="btn btn-primary">撮影</button>
-  <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
-  <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
-  <div id="result" style="margin-top: 20px;"></div>
+  <!-- 撮影とプレビューエリア -->
+  <div class="camera-container mt-4">
+    <div class="text-center">
+      <video id="video" class="img-fluid" autoplay></video>
+      <canvas id="canvas" class="d-none"></canvas>
+      <img id="preview" class="img-fluid d-none" alt="撮影画像のプレビュー">
+    </div>
+    <div class="text-center mt-3">
+      <button id="capture-button" class="btn btn-primary mx-2">撮影</button>
+      <button id="retry-button" class="btn btn-warning mx-2 d-none">再撮影</button>
+      <button id="extract-button" class="btn btn-success mx-2 d-none">文字抽出</button>
+    </div>
+    <div id="result" class="mt-4"></div>
+  </div>
 </div>
 
 <script>

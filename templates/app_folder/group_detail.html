@@ -1,17 +1,64 @@
 {% extends "base.html" %}
 {% block title %}{{ group.name }}{% endblock %}
-
 {% block contents %}
-<h2>グループ: {{ group.name }}</h2>
-<p>グループの所有者: {{ group.owner.username }}</p>
+<div class="container mt-5">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
+    <div class="container-fluid">
+      <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+        <i class="fas fa-arrow-left"></i> 
+      </button>
+      <span class="navbar-brand" style="color: white;">{{ group.name }} ({{ members_count }})</span>
+      <ul class="navbar-nav ms-auto d-flex flex-row">
+        <li class="nav-item">
+          <a href="{% url 'app_folder:edit_group' group.id %}" id="edit-icon" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+            <i class="fas fa-edit"></i> 
+          </a>
+        </li>
+        <li class="nav-item">
+          <button id="toggle-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+            <i class="fas fa-info-circle"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <section id="toggle-section" class="menu-section mb-4 card shadow-sm" style="display: none; margin-top: 60px; border-radius: 10px; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; background-color: rgba(0, 0, 0, 0.5);">
+    <div class="card-header d-flex justify-content-between" style="background-color: cadetblue; color: white; border-radius: 10px 10px 0 0;">
+        <h4 class="mb-0">グループ詳細</h4>
+        <!-- 閉じるボタン（右上） -->
+        <button id="close-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+            <i class="fas fa-times"></i> 
+        </button>
+    </div>
+    <div class="card-body" style="background-color: white; padding: 20px; height: calc(100% - 60px); overflow-y: auto;">
 
-<h3>メンバー</h3>
-<ul>
-    {% for member in members %}
-    <li>{{ member.username }}</li>
-    {% endfor %}
-</ul>
-<p>メンバー数: {{ members_count }} 人</p>
+        <div class="mb-4">
+          <h5 class="text-muted">グループ名</h5>
+          <p class="text-dark" style="font-size: 1.1rem; font-weight: bold;">{{ group.name }}</p>
+        </div>
+        <!-- グループの所有者 -->
+        <div class="mb-4">
+            <h5 class="text-muted">グループの所有者</h5>
+            <p class="text-dark" style="font-size: 1.1rem; font-weight: bold;">{{ group.owner.username }}</p>
+        </div>
+        
+        <!-- メンバーリスト -->
+        <div>
+          <h5 class="text-muted">メンバー({{ members_count }}人)</h5>
+          <ul class="list-group" style="border-radius: 10px;">
+              {% for member in members %}
+                  <li class="list-group-item" style="border: none; padding: 10px 15px;">
+                      <span class="text-dark" style="font-size: 1.1rem;">{{ member.username }}</span>
+                  </li>
+              {% endfor %}
+          </ul>
+      </div>
+    </div>
+</section>
+
+
+    
+
 
 <h3>購入データ</h3>
 {% if purchases %}
@@ -66,11 +113,6 @@
     <h4>1人あたりの金額: {{ result|floatformat:2 }}円</h4>
 {% endif %}
 
-<!-- 編集・戻るボタン -->
-<div class="mt-3">
-    <a href="{% url 'app_folder:edit_group' group.id %}" class="btn btn-primary">編集</a>
-    <a href="{% url 'app_folder:home' %}" class="btn btn-secondary">戻る</a>
-</div>
 
 <script>
   const video = document.getElementById('video');
@@ -83,6 +125,24 @@
   const form = document.getElementById('split-calculation-form');
   const context = canvas.getContext('2d');
   let stream = null;
+
+  document.getElementById('back-button').addEventListener('click', function() {
+    window.location.href = "{% url 'app_folder:home' %}";
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+        const toggleButton = document.getElementById('toggle-button');
+        const toggleSection = document.getElementById('toggle-section');
+
+        toggleButton.addEventListener('click', function () {
+            // Sectionの表示/非表示を切り替え
+            if (toggleSection.style.display === 'none') {
+                toggleSection.style.display = 'block';
+            } else {
+                toggleSection.style.display = 'none';
+            }
+        });
+    });
 
   // カメラを起動
   const startCamera = () => {
@@ -174,6 +234,41 @@
     })
     .catch(error => console.error('エラー:', error));
   });
+
+  //ハンバーガーバー
+
+  function toggleSection() {
+    var section = document.getElementById('toggle-section');
+    var button = document.getElementById('toggle-button');
+
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        button.innerHTML = '&#9650;'; // 上矢印に変更
+    } else {
+        section.style.display = 'none';
+        button.innerHTML = '&#9776;'; // ハンバーガーボタンに戻す
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+  const toggleButton = document.getElementById('toggle-button');
+  const toggleSection = document.getElementById('toggle-section');
+  const closeButton = document.getElementById('close-button');
+
+  // 詳細セクションを表示
+  toggleButton.addEventListener('click', function () {
+      toggleSection.style.display = 'block';
+  });
+
+  // 閉じるボタンをクリックすると詳細セクションを非表示
+  closeButton.addEventListener('click', function () {
+      toggleSection.style.display = 'none';
+  });
+
+  // バックボタンをクリックすると元のページに戻る
+  document.getElementById('back-button').addEventListener('click', function() {
+      window.location.href = "{% url 'app_folder:home' %}";
+  });
+});
 </script>
 
 {% endblock %}

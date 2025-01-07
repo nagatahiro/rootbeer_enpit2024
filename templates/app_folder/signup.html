@@ -3,10 +3,11 @@
 {% block contents %}
 <main class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-lg-6 col-md-8 col-sm-10">
             <div class="card shadow">
                 <div class="card-body">
-                    <h1 class="card-title text-center mb-4">アカウントを作成</h1>
+                    <h1 class="card-title text-center mb-4" style="word-break: keep-all;">アカウント作成</h1>
+                    <p class="text-muted text-center mb-4">すでにアカウントをお持ちですか？<a href="{% url 'app_folder:login' %}">ログイン</a></p>
                     
                     <form method="post" action="{% url 'app_folder:signup' %}">
                         {% csrf_token %}
@@ -49,4 +50,3 @@
     </div>
 </main>
 {% endblock %}
-

@@ -82,44 +82,32 @@ class SignUp(CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
 class CreateGroupView(LoginRequiredMixin, TemplateView):
-    """グループ作成ページ"""
     template_name = "app_folder/create_group.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # セッションから検索結果と現在のグループ名を取得してコンテキストに渡す
-        search_results = self.request.session.pop('search_results', [])
-        current_group_name = self.request.session.get('current_group_name', '')
-        selected_users = self.request.session.get('selected_users', [])
-        context['search_results'] = search_results
-        context['current_group_name'] = current_group_name
-        context['selected_users'] = selected_users
+        context['search_results'] = self.request.session.pop('search_results', [])
+        context['current_group_name'] = self.request.session.get('current_group_name', '')
+        context['selected_users'] = self.request.session.get('selected_users', [])
         return context
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
 
         if action == "search":
-            # ユーザー検索処理
             search_query = request.POST.get('search_user', '').strip()
             group_name = request.POST.get('group_name', '').strip()
-
-            # セッションから選択済みユーザーを取得
             selected_users = self.request.session.get('selected_users', [])
 
-            # 新たに選択されたユーザーを追加
             new_selected_users = request.POST.getlist('invited_users')
-            selected_users = list(set(selected_users + new_selected_users))  # 重複を排除
+            selected_users = list(set(selected_users + new_selected_users))
             self.request.session['selected_users'] = selected_users
-
-            # グループ名をセッションに保存
-            request.session['current_group_name'] = group_name
+            self.request.session['current_group_name'] = group_name
 
             if search_query:
-                # 検索結果を取得（自分以外のユーザーのみ表示）
                 search_results = list(
                     User.objects.filter(username__icontains=search_query)
-                    .exclude(id=request.user.id)  # 自分自身を検索結果から除外
+                    .exclude(id=request.user.id)
                     .values('id', 'username')
                 )
                 request.session['search_results'] = search_results
@@ -129,31 +117,26 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
             return redirect('app_folder:create_group')
 
         elif action == "create":
-            # グループ作成処理
             group_name = request.POST.get('group_name', '').strip()
-            invited_users_ids = request.POST.getlist('invited_users')  # 招待するユーザーIDリスト
+            invited_users_ids = self.request.session.get('selected_users', [])
 
-            if group_name:
-                # グループを作成
+            if group_name and invited_users_ids:
                 group = CustomGroup.objects.create(name=group_name, owner=request.user)
-
                 group.members.add(request.user)
-
-                if invited_users_ids:
-                    invited_users = User.objects.filter(id__in=invited_users_ids)
-                    group.members.add(*invited_users)
-                    print(f"招待されたユーザー: {[user.username for user in invited_users]}")
-                
-                # セッションをクリア
-                self.request.session.pop('selected_users', None)
-                self.request.session.pop('current_group_name', None)
+                invited_users = User.objects.filter(id__in=invited_users_ids)
+                group.members.add(*invited_users)
 
                 messages.success(request, f"グループ '{group_name}' を作成しました。")
+                self.request.session.pop('selected_users', None)
+                self.request.session.pop('current_group_name', None)
             else:
                 messages.error(request, "グループ名を入力してください。")
 
             return redirect('app_folder:home')
         
+
+    
+
         
 
 class AddFriendPageView(LoginRequiredMixin, TemplateView):
@@ -197,10 +180,13 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(CustomGroup, id=group_id)
+        members = group.members.all()  # グループのメンバー
         purchases = group.purchases.all()  # グループに関連付けられた購入データ
 
         context['group'] = group
         context['purchases'] = purchases
+        context['members'] = members  # メンバーリストを追加
+        context['members_count'] = members.count()  # メンバー数を追加
         return context
 
 

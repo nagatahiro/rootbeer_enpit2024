@@ -1,0 +1,193 @@
+/* 全体のスタイル */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box; /* パディングとボーダーを含めて幅を計算 */
+}
+
+/* ナビゲーションバー */
+.navbar {
+    background-color: cadetblue;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+/* コンテンツ */
+#content {
+    margin-top: 70px; /* ナビゲーションバーの高さ分のマージン */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 auto;
+}
+
+/* カード */
+.card {
+    margin: 10px 0;
+    border-radius: 8px;
+}
+
+/* リストアイテム */
+.list-group-item {
+    cursor: pointer;
+}
+
+/* チェックボックスとラベルの間隔 */
+.form-check {
+    margin-left: 10px;
+}
+
+/* 右寄せボタン */
+.rbtn {
+    float: right;
+}
+
+#toggle-section {
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(-20px);
+}
+
+#toggle-section.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .navbar-nav {
+        text-align: center;
+    }
+
+    h1, h2 {
+        font-size: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+    }
+
+    .card {
+        margin: 5px 0;
+    }
+
+    .group-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .group-item a {
+        font-size: 1rem;
+    }
+
+    .group-item p {
+        font-size: 0.9rem;
+    }
+}
+
+
+/* グループ作成画面 */
+
+.group-create-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    font-size: 1.8rem;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.group-form .form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: bold;
+    color: #555;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.input-group .form-control {
+    flex-grow: 1;
+}
+
+.search-results, .selected-users {
+    margin-top: 30px;
+}
+
+h3 {
+    font-size: 1.4rem;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.list-group {
+    list-style-type: none;
+    padding: 0;
+}
+
+.list-group-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.list-group-item .form-check-label {
+    margin-left: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border: none;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+}
+
+.btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}

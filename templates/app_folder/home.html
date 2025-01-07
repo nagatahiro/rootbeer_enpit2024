@@ -2,23 +2,20 @@
 {% block title %}ホーム{% endblock %}
 
 {% block contents %}
-<div class="container-fluid" style="height: 100vh;">
-    <p>{{ user.username }}さん、こんにちは。</p>
-    <a href="{% url 'app_folder:top' %}">ログアウト</a>
+<div class="container-fluid" style="min-height: 100vh;">
     <br>
-    <div class="container">
-        <h2>グループ</h2>
-        <ul>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>グループ一覧</h1>
+        </div>
+        <hr>
+        <ul class="list-unstyled">
             {% for item in groups_with_members %}
-            <li>
-                <a href="{% url 'app_folder:group_detail' item.group.id %}">
-                   <strong>{{ item.group.name }}</strong>
+            <li class="border-bottom border-secondary mb-2 pb-2 d-flex justify-content-between align-items-center">
+                <a href="{% url 'app_folder:group_detail' item.group.id %}" class="text-decoration-none d-flex justify-content-between align-items-center w-100">
+                    <h3 class="mb-0 text-dark">{{ item.group.name }}({{ item.members|length }})</h3>
+                    <span class="ms-2 text-muted">›</span>  <!-- 右向き矢印 -->
                 </a>
-                <ul>
-                    {% for member in item.members %}
-                    <li>{{ member.username }}</li>
-                    {% endfor %}
-                </ul>
             </li>
             {% empty %}
             <p>所属しているグループはありません。</p>
@@ -26,10 +23,13 @@
         </ul>
 
         <!-- グループ作成リンク -->
-        <div class="mt-3">
-            <a href="{% url 'app_folder:create_group' %}" class="btn btn-secondary">グループ作成</a>
-        </div>
     </div>
+</div>
+
+<!-- プラスボタン -->
+<button id="add-group-button" class="btn btn-link d-flex justify-content-center align-items-center"
+style="font-size: 4rem; color: cadetblue; border: none; background: none; width: 80px; height: 80px; position: fixed; bottom: 20px; right: 20px; z-index: 1000; border-radius: 50%; "
+onclick="window.location.href='{% url 'app_folder:create_group' %}';">
+    <i class="fas fa-circle-plus"></i>
+</button>
 {% endblock %}
-
-

@@ -1,59 +1,88 @@
-<h2>グループ編集: {{ group.name }}</h2>
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block contents %}
 
-<h3>現在のメンバー</h3>
-<form method="post">
-    {% csrf_token %}
-    <ul>
-        {% for member in members %}
-        <li>
-            <input type="checkbox" name="remove_members" value="{{ member.id }}">
-            {{ member.username }}
-        </li>
-        {% endfor %}
-    </ul>
-    <button type="submit">選択したメンバーを削除</button>
-</form>
+<div class="container mt-5">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
+        <div class="container-fluid">
+            <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;" onclick="window.location.href='{% url 'app_folder:group_detail' group.id %}';">
+                &#8592;
+            </button>
+            <span class="navbar-brand mx-auto" style="color: white; text-align: center;">編集画面: {{ group.name }}</span>
+        </div>
+    </nav>
 
-<h3>メンバーを検索して追加</h3>
-<!-- 検索フォーム -->
-<form method="get">
-    <input
-        type="text"
-        name="search"
-        placeholder="ユーザー名を検索"
-        value="{{ request.GET.search|default:'' }}"
-    >
-    <button type="submit">検索</button>
-</form>
-
-<!-- 検索結果 -->
-{% if search_results %}
+    <h3>現在のメンバー</h3>
     <form method="post">
         {% csrf_token %}
-        <ul>
-            {% for user in search_results %}
-            <li>
-                <input type="checkbox" name="new_members" value="{{ user.id }}">
-                {{ user.username }} 
+        <ul class="list-group">
+            {% for member in members %}
+            <li class="list-group-item d-flex justify-content-between align-items-center" onclick="toggleCheckbox('{{ member.id }}');">
+                <div class="form-check">
+                    <input type="checkbox" id="member-{{ member.id }}" name="remove_members" value="{{ member.id }}">
+                    <label class="form-check-label" for="member-{{ member.id }}">{{ member.username }}</label>
+                </div>
             </li>
             {% endfor %}
         </ul>
-        <button type="submit">選択したユーザーを追加</button>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-danger mt-2">選択したメンバーを削除</button>
+        </div>
     </form>
-{% else %}
-    <p>該当するユーザーが見つかりませんでした。</p>
-{% endif %}
 
-<div style="display: inline-block; margin-right: 10px;">
-    <a href="{% url 'app_folder:group_detail' group.id %}" class="btn btn-secondary">戻る</a>
-</div>
-<div style="display: inline-block;">
-    <form method="post" style="display: inline;">
-        {% csrf_token %}
-        <button type="submit" name="delete_group" class="btn btn-secondary"
-                onclick="return confirm('グループを消去しますか？');">
-            グループ消去
-        </button>
+    <h3>メンバーを検索して追加</h3>
+    <form method="get">
+        <div class="input-group mb-3">
+            <input
+                type="text"
+                name="search"
+                placeholder="ユーザー名を検索"
+                value="{{ request.GET.search|default:'' }}"
+                class="form-control"
+            >
+            <button type="submit" class="btn btn-primary">検索</button>
+        </div>
     </form>
+
+    {% if search_results %}
+        <form method="post">
+            {% csrf_token %}
+            <ul class="list-group mt-2">
+                {% for user in search_results %}
+                <li class="list-group-item d-flex justify-content-between align-items-center" onclick="toggleCheckbox('{{ user.id }}');">
+                    <div class="form-check">
+                        <input type="checkbox" id="user-{{ user.id }}" name="new_members" value="{{ user.id }}">
+                        <label class="form-check-label" for="user-{{ user.id }}">{{ user.username }}</label>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-success mt-2">選択したユーザーを追加</button>
+            </div>
+        </form>
+    {% else %}
+        <p class="text-muted">該当するユーザーが見つかりませんでした。</p>
+    {% endif %}
+
+    <div class="d-flex justify-content-end mt-4">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="delete_group" class="btn btn-danger"
+                    onclick="return confirm('グループを消去しますか？');">
+                グループ消去
+            </button>
+        </form>
+    </div>
 </div>
 
+<script>
+    function toggleCheckbox(memberId) {
+        const checkbox = document.getElementById(`member-${memberId}`) || document.getElementById(`user-${memberId}`);
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+        }
+    }
+</script>
+
+{% endblock %}
