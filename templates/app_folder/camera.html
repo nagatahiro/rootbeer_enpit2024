@@ -1,37 +1,49 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <link rel="stylesheet" href="https://cccabinet.jpn.org/bootstrap4/css/style_camera.css">
-</head>
-<body>
-
+{% extends "base.html" %}
+{% block title %}撮影ページ{% endblock %}
+{% block contents %}
 <div class="container mt-5">
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
     <div class="container-fluid">
-      <button id="back-button" class="btn btn-link">
+      <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
         <i class="fas fa-arrow-left"></i> 
       </button>
-      <span class="navbar-brand">{{ group.name }}：登録画面</span>
+      <span class="navbar-brand" style="color: white;">撮影画面</span>
+      <ul class="navbar-nav ms-auto d-flex flex-row">
+        <li class="nav-item">
+          <button id="retry-button" class="btn" style="display: none; background-color: cadetblue; color: white;">
+            <i class="fas fa-sync-alt fa-lg"></i>  <!-- アイコンサイズを大きく -->
+          </button>
+        </li>
+      </ul>
     </div>
   </nav>
-
+  
+  <!-- スマホカメラを呼び出すボタン -->
+  <button id="open-camera-button" class="btn btn-outline-primary"><i class="fa fa-camera"></i><br>カメラを起動</button>
+  
   <!-- カメラ機能 -->
   <div class="camera-container mt-4">
     <video id="video" width="100%" autoplay style="display: none;"></video>
     <canvas id="canvas" style="display: none;"></canvas>
     <img id="preview" width="100%" style="display: none;" alt="撮影画像のプレビュー">
     <div class="mt-2">
-      <!-- スマホカメラを呼び出すボタン -->
-      <button id="open-camera-button" class="btn btn-outline-primary">スマホカメラを開く</button>
-      <button id="capture-button" class="btn btn-outline-primary" style="display: none;">撮影</button>
-      <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
-      <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
+      <button id="extract-button" class="btn btn-success w-100" style="display: none;"><i class="fas fa-save ms-2"></i> 保存</button>
       <!-- スマホカメラから画像を取得するためのインプット -->
       <input type="file" id="file-input" accept="image/*" capture="camera" style="display:none;">
     </div>
     <div id="result" class="mt-4"></div>
   </div>
 </div>
+
+<style>
+  #open-camera-button {
+    position: absolute;
+    top: 500%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10; /* ボタンが他の要素の上に表示されるように */
+  }
+</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -49,7 +61,8 @@
   const resultDiv = document.getElementById('result');
   const context = canvas.getContext('2d');
   let stream = null;
-  
+
+  // 戻るボタン
   document.getElementById('back-button').addEventListener('click', function() {
     window.location.href = "{% url 'app_folder:group_detail' group.id %}";
   });
@@ -70,13 +83,19 @@
         // キャンバスに画像を描画
         const img = new Image();
         img.onload = function() {
+          // キャンバスのサイズを画像のサイズに合わせる
           canvas.width = img.width;
           canvas.height = img.height;
           context.drawImage(img, 0, 0);
-          const imageData = canvas.toDataURL('image/jpeg', 1.0);
+          
+          // 画像データをデータURLとして取得
+          const imageData = canvas.toDataURL('image/jpeg', 1.0);  // 画質を最大（1.0）に設定
           preview.src = imageData;
+          
+          // プレビュー表示とボタン表示
           video.style.display = 'none';
           preview.style.display = 'block';
+          openCameraButton.style.display = 'none';  // スマホカメラボタンを非表示
           retryButton.style.display = 'inline-block';
           extractButton.style.display = 'inline-block';
         };
@@ -92,6 +111,7 @@
     retryButton.style.display = 'none'; // 再撮影ボタンを非表示
     extractButton.style.display = 'none'; // 文字抽出ボタンを非表示
     fileInput.value = ''; // ファイル入力をリセット
+    openCameraButton.style.display = 'inline-block'; // カメラボタンを再表示
   });
   
   // 文字抽出
@@ -113,7 +133,10 @@
     .then(data => {
         if (data.status === 'success') {
             const storeName = data.store_name || "";
-            const totalAmount = data.formatted_total || "";
+            let totalAmount = data.formatted_total || 0;
+
+            // 円マークがある場合は取り除く
+            totalAmount = totalAmount.replace(/[¥￥]/g, '');
 
             // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
             window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
@@ -126,7 +149,6 @@
         alert('処理中にエラーが発生しました。');
     });
 });
-</script>
 
-</body>
-</html>
+</script>
+{% endblock %}
