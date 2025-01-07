@@ -18,7 +18,8 @@ from django.shortcuts import render, get_object_or_404
 from .models import CustomGroup
 from .forms import SplitBillForm
 from django.db.models import Q
-
+import logging
+logger = logging.getLogger(__name__)
 from . import forms
 from google.cloud import vision
 
@@ -477,6 +478,7 @@ class PhotographView(View):
     def post(self, request, *args, **kwargs):
         try:
             # リクエストから画像データを取得
+            logger.info("リクエスト受信: %s", request.POST)
             image_data = request.POST.get('image')
             if not image_data:
                 return JsonResponse({'status': 'error', 'message': '画像データがありません。'})
@@ -521,6 +523,7 @@ class PhotographView(View):
             return JsonResponse(response_data)
 
         except Exception as e:
+            logger.error(f"エラー: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)})
 
 # EditGroupViewをedit_groupとしてエクスポート
