@@ -133,10 +133,12 @@
     .then(data => {
         if (data.status === 'success') {
             const storeName = data.store_name || "";
-            let totalAmount = data.formatted_total || 0;
+            let totalAmount = data.formatted_total || "0";  // デフォルト値を文字列で設定
 
-            // 円マークがある場合は取り除く
-            totalAmount = totalAmount.replace(/[¥￥]/g, '');
+            // totalAmountが文字列であれば円マークを取り除く
+            if (typeof totalAmount === 'string') {
+                totalAmount = totalAmount.replace(/[¥￥]/g, '').trim();  // 余分な空白も削除
+            }
 
             // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
             window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
@@ -149,6 +151,7 @@
         alert('処理中にエラーが発生しました。');
     });
 });
+
 
 </script>
 {% endblock %}
