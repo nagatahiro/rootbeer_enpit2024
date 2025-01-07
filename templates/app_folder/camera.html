@@ -133,7 +133,7 @@
     .then(data => {
         if (data.status === 'success') {
             const storeName = data.store_name || "";
-            const totalAmount = data.formatted_total || 0;
+            const totalAmount = data.formatted_total || "";
 
             // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
             window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
