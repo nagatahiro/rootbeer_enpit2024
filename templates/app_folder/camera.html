@@ -4,123 +4,142 @@
   <link rel="stylesheet" href="https://cccabinet.jpn.org/bootstrap4/css/style_camera.css">
 </head>
 <body>
-  <div class="container mt-5">
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-      <div class="container-fluid">
-        <button id="back-button" class="btn btn-link">
-          <i class="fas fa-arrow-left"></i>
-        </button>
-        <span class="navbar-brand">{{ group.name }}：カメラ画面</span>
-      </div>
-    </nav>
 
-    <!-- カメラ機能 -->
-    <div class="camera-container mt-4">
-      <video id="video" width="100%" autoplay></video>
-      <canvas id="canvas" style="display: none;"></canvas>
-      <img id="preview" width="100%" style="display: none;" alt="撮影画像のプレビュー">
-      <div class="mt-2">
-        <button id="capture-button" class="btn btn-outline-primary">撮影</button>
-        <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
-        <button id="use-button" class="btn btn-success" style="display: none;">使用</button>
-      </div>
-      <div id="result" class="mt-4"></div>
+<div class="container mt-5">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container-fluid">
+      <button id="back-button" class="btn btn-link">
+        <i class="fas fa-arrow-left"></i> 
+      </button>
+      <span class="navbar-brand">{{ group.name }}：登録画面</span>
     </div>
+  </nav>
+
+  <!-- カメラ機能 -->
+  <div class="camera-container mt-4">
+    <video id="video" width="100%" autoplay></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="preview" width="100%" style="display: none;" alt="撮影画像のプレビュー">
+    <div class="mt-2">
+      <button id="capture-button" class="btn btn-outline-primary">撮影</button>
+      <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
+      <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
+    </div>
+    <div id="result" class="mt-4"></div>
   </div>
+</div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      startCamera(); // ページロード時にカメラを自動起動
-    });
-
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const preview = document.getElementById('preview');
-    const captureButton = document.getElementById('capture-button');
-    const retryButton = document.getElementById('retry-button');
-    const useButton = document.getElementById('use-button');
-    const resultDiv = document.getElementById('result');
-    const context = canvas.getContext('2d');
-    let stream = null;
-
-    document.getElementById('back-button').addEventListener('click', function() {
-      window.location.href = "{% url 'app_folder:shooting_registration' group.id %}";
-    });
-
-    // カメラを起動
-    const startCamera = () => {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(cameraStream => {
-          stream = cameraStream;
-          video.srcObject = stream;
-          video.style.display = 'block';
-          canvas.style.display = 'none';
-          preview.style.display = 'none';
-          retryButton.style.display = 'none';
-          useButton.style.display = 'none';
-          captureButton.style.display = 'inline-block';
-          resultDiv.innerHTML = '';
-        })
-        .catch(error => {
-          console.error("カメラのアクセスに失敗しました:", error);
-        });
-    };
-
-    // 撮影
-    captureButton.addEventListener('click', () => {
-      const videoWidth = video.videoWidth;
-      const videoHeight = video.videoHeight;
-      canvas.width = videoWidth;
-      canvas.height = videoHeight;
-
-      context.drawImage(video, 0, 0, videoWidth, videoHeight);
-      const imageData = canvas.toDataURL('image/jpeg', 1.0);
-      preview.src = imageData;
-      video.style.display = 'none';
-      preview.style.display = 'block';
-      retryButton.style.display = 'inline-block';
-      useButton.style.display = 'inline-block';
-      stopCamera();
-    });
-
-    // 再撮影
-    retryButton.addEventListener('click', () => {
-      startCamera(); // カメラを再起動
-      preview.style.display = 'none';
-      useButton.style.display = 'none';
-      retryButton.style.display = 'none';
-    });
-
-    // 使用ボタン
-    useButton.addEventListener('click', () => {
-      const imageData = canvas.toDataURL('image/jpeg', 1.0);
-
-      fetch("{% url 'app_folder:photograph' %}", {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'X-CSRFToken': '{{ csrf_token }}',
-          },
-          body: new URLSearchParams({
-              'image': imageData,
-              'group_id': '{{ group.id }}'
-          })
-      })
-      .then(response => response.json())
-      .then(data => {
-          if (data.status === 'success') {
-              const storeName = data.store_name || "";
-              const totalAmount = data.formatted_total || "";
-              window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
-          } else {
-              alert(`エラー: ${data.message}`);
-          }
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    startCamera(); // ページロード時にカメラを自動起動
+  });
+  
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const preview = document.getElementById('preview');
+  const captureButton = document.getElementById('capture-button');
+  const retryButton = document.getElementById('retry-button');
+  const extractButton = document.getElementById('extract-button');
+  const resultDiv = document.getElementById('result');
+  const form = document.getElementById('split-calculation-form');
+  const context = canvas.getContext('2d');
+  let stream = null;
+  
+  document.getElementById('back-button').addEventListener('click', function() {
+    window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent('{{ request.GET.store_name }}') + "&total_amount=" + encodeURIComponent('{{ request.GET.total_amount }}');
+  });
+  
+  // カメラを起動
+  const startCamera = () => {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(cameraStream => {
+        stream = cameraStream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+        preview.style.display = 'none';
+        retryButton.style.display = 'none';
+        extractButton.style.display = 'none';
+        captureButton.style.display = 'inline-block';
+        resultDiv.innerHTML = '';
       })
       .catch(error => {
-          console.error('エラー:', error);
-          alert('処理中にエラーが発生しました。');
+        console.error("カメラのアクセスに失敗しました:", error);
       });
+  };
+  
+  // カメラを停止
+  const stopCamera = () => {
+    if (stream) {
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+      stream = null;
+    }
+  };
+  
+  // 撮影
+  captureButton.addEventListener('click', () => {
+    // ビデオのサイズを取得し、キャンバスのサイズを設定
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+  
+    // キャンバスのサイズをビデオのサイズに合わせる
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+  
+    // 画像をキャンバスに描画
+    context.drawImage(video, 0, 0, videoWidth, videoHeight);
+    
+    const imageData = canvas.toDataURL('image/jpeg', 1.0);  // 画質を最大（1.0）に設定
+    preview.src = imageData;
+    video.style.display = 'none';
+    preview.style.display = 'block';
+    retryButton.style.display = 'inline-block';
+    extractButton.style.display = 'inline-block';
+    stopCamera();
+  });
+  
+  // 再撮影
+  retryButton.addEventListener('click', () => {
+    startCamera(); // カメラを再起動
+    preview.style.display = 'none'; // プレビュー画像を非表示
+    form.style.display = 'none'; // フォームを非表示
+    resetForm(); // フォームをリセット
+  });
+  
+  // 文字抽出
+  extractButton.addEventListener('click', () => {
+    const imageData = canvas.toDataURL('image/jpeg', 1.0);  // 画質を最大（1.0）に設定
+
+    fetch("{% url 'app_folder:photograph' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: new URLSearchParams({
+            'image': imageData,
+            'group_id': '{{ group.id }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const storeName = data.store_name || "";
+            const totalAmount = data.formatted_total || "";
+
+            // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
+            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
+        } else {
+            alert(`エラー: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('エラー:', error);
+        alert('処理中にエラーが発生しました。');
     });
-  </script>
+});
+</script>
+
 </body>
 </html>
