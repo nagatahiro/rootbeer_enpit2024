@@ -406,15 +406,15 @@ class PhotographView(View):
         import re
         # 複数のパターンを試す
         patterns = [
-            r'合計\s*[¥￥]?\s*(\d+(?:,\d+)?)',  # 合計 ¥1,727
-            r'食計\s*\d+点\s*[¥￥]?\s*(\d+(?:,\d+)?)',  # 食計 3点 ¥1,727
-            r'小計\s*[¥￥]?\s*(\d+(?:,\d+)?)'   # 小計 ¥1,727
+            r'合計\s*[¥￥]\s*(\d+(?:,\d+)?)',  # 合計 ¥1,727
+            r'食計\s*\d+点\s*[¥￥]\s*(\d+(?:,\d+)?)',  # 食計 3点 ¥1,727
+            r'小計\s*[¥￥]\s*(\d+(?:,\d+)?)'   # 小計 ¥1,727
         ]
         
         for pattern in patterns:
             match = re.search(pattern, text)
             if match:
-                # ¥マークを含まない金額部分を取得し、カンマを除去してから数値に変換
+                # カンマを除去してから数値に変換
                 amount_str = match.group(1).replace(',', '')
                 try:
                     # 金額が整数でない場合もfloatからintに変換
@@ -423,7 +423,6 @@ class PhotographView(View):
                     continue
         
         return None
-
 
 
     def extract_store_name(self, text_annotations, checking_line_num=5):
