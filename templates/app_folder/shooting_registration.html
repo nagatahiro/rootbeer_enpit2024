@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block contents %}
+<div class="container mt-5">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
+      <div class="container-fluid">
+        <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+          <i class="fas fa-arrow-left"></i> 
+        </button>
+        <span class="navbar-brand" style="color: white;">{{ group.name }}：登録画面</span>
+      </div>
+    </nav>
+
+
+<div class="form-group">
+  <label for="selectedMember" class="h5">支払いする人</label>
+  <select id="selectedMember" name="selected_member" class="form-control">
+    {% for member in members %}
+    <option value="{{ member.id }}">{{ member.username }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+
+<!-- カメラ機能 -->
+<div class="camera-container mt-4" style="display: none;">
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+    <img id="preview" width="640" height="480" style="display: none;" alt="撮影画像のプレビュー">
+    <div class="mt-2">
+        <button id="capture-button" class="btn btn-outline-primary">撮影</button>
+        <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
+        <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
+    </div>
+    <div id="result" style="margin-top: 20px;"></div>
+</div>
+
+<!-- 撮影ボタン -->
+<button id="show-camera-button" class="btn btn-outline-success" onclick="toggleCamera()">レシート撮影</button>
+
+<!-- 割り勘計算フォーム -->
+<form id="split-calculation-form" method="post" style="display: none; margin-top: 20px;">
+    {% csrf_token %}
+    <h3>支払いする人</h3>
+    <select name="selected_member" required>
+        {% for member in members %}
+        <option value="{{ member.id }}">{{ member.username }}</option>
+        {% endfor %}
+    </select>
+
+    <h4>料金計算</h4>
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">計算</button>
+</form>
+
+<!-- 計算結果を表示 -->
+{% if result is not None %}
+    <div class="calculation-result mt-4">
+        <h4>記録日時: {{ group.created_at|date:"Y/m/d H:i:s" }}</h4>
+        <h4>店名: {{ store_name|default:"不明" }}</h4>
+        <h4>支払う人: {{ selected_member.username|default:"未選択" }}</h4>
+        <h4>合計金額: ¥{{ total_amount|floatformat:2|default:"0.00" }}</h4>
+        <h4>1人あたりの金額: ¥{{ result|floatformat:2 }}</h4>
+    </div>
+{% endif %}
+
+
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const preview = document.getElementById('preview');
+  const captureButton = document.getElementById('capture-button');
+  const retryButton = document.getElementById('retry-button');
+  const extractButton = document.getElementById('extract-button');
+  const resultDiv = document.getElementById('result');
+  const form = document.getElementById('split-calculation-form');
+  const context = canvas.getContext('2d');
+  let stream = null;
+
+  document.getElementById('back-button').addEventListener('click', function() {
+    window.location.href = "{% url 'app_folder:group_detail' group.id %}";
+});
+
+  document.addEventListener('DOMContentLoaded', function () {
+        const toggleButton = document.getElementById('toggle-button');
+        const toggleSection = document.getElementById('toggle-section');
+
+        toggleButton.addEventListener('click', function () {
+            // Sectionの表示/非表示を切り替え
+            if (toggleSection.style.display === 'none') {
+                toggleSection.style.display = 'block';
+            } else {
+                toggleSection.style.display = 'none';
+            }
+        });
+    });
+
+  // カメラを起動
+  const startCamera = () => {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(cameraStream => {
+        stream = cameraStream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+        preview.style.display = 'none';
+        retryButton.style.display = 'none';
+        extractButton.style.display = 'none';
+        captureButton.style.display = 'inline-block';
+        resultDiv.innerHTML = '';
+      })
+      .catch(error => {
+        console.error("カメラのアクセスに失敗しました:", error);
+      });
+  };
+
+  // カメラを停止
+  const stopCamera = () => {
+    if (stream) {
+      const tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+      stream = null;
+    }
+  };
+
+  // カメラ表示トグル
+  const toggleCamera = () => {
+    document.querySelector('.camera-container').style.display = 'block';
+    document.getElementById('show-camera-button').style.display = 'none';
+    startCamera();
+  };
+
+  // 撮影
+  captureButton.addEventListener('click', () => {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = canvas.toDataURL('image/jpeg');
+    preview.src = imageData;
+    video.style.display = 'none';
+    preview.style.display = 'block';
+    retryButton.style.display = 'inline-block';
+    extractButton.style.display = 'inline-block';
+    stopCamera();
+  });
+
+  // 再撮影
+retryButton.addEventListener('click', () => {
+    startCamera(); // カメラを再起動
+    preview.style.display = 'none'; // プレビュー画像を非表示
+    form.style.display = 'none'; // フォームを非表示
+    resetForm(); // フォームをリセット
+});
+
+// フォームのリセット関数
+const resetForm = () => {
+    const amountField = form.querySelector('input[name="amount"]');
+    const membersField = form.querySelector('input[name="members_count"]');
+    if (amountField) amountField.value = ''; // 合計金額フィールドをクリア
+    if (membersField) membersField.value = ''; // 人数フィールドをクリア
+};
+
+  // 文字抽出
+  extractButton.addEventListener('click', () => {
+    const imageData = canvas.toDataURL('image/jpeg');
+
+    fetch("{% url 'app_folder:photograph' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: new URLSearchParams({
+            'image': imageData,
+            'group_id': '{{ group.id }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            let resultHTML = '';
+            
+            // 抽出されたテキストを表示
+            resultHTML += `<h3>抽出されたテキスト:</h3><pre>${data.extracted_text}</pre>`;
+            
+            // 店名を表示
+            const storeName = data.store_name || '店名を抽出できませんでした';
+            resultHTML += `<h3>店名:</h3><pre>${storeName}</pre>`;
+            
+            // 合計金額を表示
+            resultHTML += `<h3>合計金額:</h3><pre>${data.formatted_total || '合計金額を抽出できませんでした'}</pre>`;
+            
+            resultDiv.innerHTML = resultHTML;
+            
+            // フォームを表示して値を設定
+            form.style.display = 'block';
+            const amountField = form.querySelector('input[name="amount"]');
+            if (amountField && data.total_amount) {
+                amountField.value = data.total_amount;
+            }
+            
+            // メンバー数を設定
+            const membersField = form.querySelector('input[name="members_count"]');
+            if (membersField) {
+                membersField.value = '{{ members.count }}';
+            }
+
+            // 店名をhiddenフィールドとしてフォームに追加
+            let storeNameInput = form.querySelector('input[name="store_name"]');
+            if (!storeNameInput) {
+                storeNameInput = document.createElement('input');
+                storeNameInput.type = 'hidden';
+                storeNameInput.name = 'store_name';
+                form.appendChild(storeNameInput);
+            }
+            storeNameInput.value = data.store_name || '';
+        } else {
+            alert(`エラー: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('エラー:', error);
+        alert('処理中にエラーが発生しました。');
+    });
+  });
+
+  //ハンバーガーバー
+
+  function toggleSection() {
+    var section = document.getElementById('toggle-section');
+    var button = document.getElementById('toggle-button');
+
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        button.innerHTML = '&#9650;'; // 上矢印に変更
+    } else {
+        section.style.display = 'none';
+        button.innerHTML = '&#9776;'; // ハンバーガーボタンに戻す
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+  const toggleButton = document.getElementById('toggle-button');
+  const toggleSection = document.getElementById('toggle-section');
+  const closeButton = document.getElementById('close-button');
+
+  // 詳細セクションを表示
+  toggleButton.addEventListener('click', function () {
+      toggleSection.style.display = 'block';
+  });
+
+  // 閉じるボタンをクリックすると詳細セクションを非表示
+  closeButton.addEventListener('click', function () {
+      toggleSection.style.display = 'none';
+  });
+
+  // バックボタンをクリックすると元のページに戻る
+  document.getElementById('back-button').addEventListener('click', function() {
+      window.location.href = "{% url 'app_folder:home' %}";
+  });
+});
+</script>
+
+{% endblock %}

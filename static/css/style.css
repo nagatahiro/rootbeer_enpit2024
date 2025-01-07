@@ -226,3 +226,21 @@ h5 {
 h2 {
     margin-top: 10px;
 }
+
+
+ul {
+    list-style-type: none; /* 点を消す */
+    padding: 0; /* デフォルトの余白をなくす */
+    margin: 0; /* デフォルトの余白をなくす */
+  }
+  li {
+    font-size: 1.2rem; /* フォントサイズを少し大きく */
+    margin: 10px 0; /* アイテム間に余白を追加 */
+    padding: 10px; /* アイテム内に余白を追加 */
+    background-color: #f9f9f9; /* アイテムの背景色 */
+    border-radius: 5px; /* 丸みをつける */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 影を追加 */
+  }
+  li:nth-child(even) {
+    background-color: #e9e9e9; /* 偶数項目の背景色 */
+  }

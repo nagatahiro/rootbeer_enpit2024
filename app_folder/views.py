@@ -222,7 +222,62 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
 
         return redirect('app_folder:group_detail', group_id=group_id)
 
+from decimal import Decimal
+class ShootingRegistration(LoginRequiredMixin, TemplateView):
+    template_name = "app_folder/shooting_registration.html"
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+        members_count = group.members.count()
 
+        # セッションからデータを取得
+        total_amount = self.request.session.pop('total_amount', None)
+        store_name = self.request.session.pop('store_name', None)
+        selected_member_id = self.request.session.pop('selected_member_id', None)
+
+        # 選択されたメンバーの取得
+        selected_member = None
+        if selected_member_id:
+            selected_member = User.objects.filter(id=selected_member_id).first()
+
+        context['form'] = SplitBillForm(initial={
+            'amount': total_amount,
+            'members_count': members_count
+            
+        })
+        context['group'] = group
+        context['members'] = group.members.all()
+        context['result'] = self.request.session.pop('result', None)
+        context['store_name'] = store_name
+        context['selected_member'] = selected_member
+        context['total_amount'] = total_amount
+        return context
+
+    def post(self, request, *args, **kwargs):
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        form = SplitBillForm(request.POST)
+        if form.is_valid():
+            amount = form.cleaned_data['amount']
+            members_count = form.cleaned_data['members_count']
+            selected_member_id = request.POST.get('selected_member')
+            store_name = request.session.get('store_name')
+
+            if members_count > 0:
+                result = amount / Decimal(members_count)
+                request.session['result'] = float(result)
+                request.session['total_amount'] = float(amount)
+                request.session['store_name'] = store_name
+                request.session['selected_member_id'] = selected_member_id
+                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
+            else:
+                messages.error(request, "人数を1以上にしてください。")
+        else:
+            messages.error(request, "無効な入力です。")
+
+        return redirect('app_folder:shooting_registration', group_id=group_id)
 
 
 class EditGroupView(LoginRequiredMixin, TemplateView):

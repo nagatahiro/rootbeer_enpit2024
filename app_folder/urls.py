@@ -19,5 +19,6 @@ urlpatterns = [
     path('add-friend/', views.AddFriendPageView.as_view(), name='add_friend'),  # フレンド追加用のURL
     path('photograph/', views.PhotographView.as_view(), name='photograph'),
     path('edit-group/<int:id>/', edit_group, name='edit_group'),
+    path('home/<int:group_id>/photo', views.ShootingRegistration.as_view(), name='shooting_registration'), #撮影ページ
 
 ]
