@@ -94,6 +94,7 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
 
+        # 検索処理
         if action == "search":
             search_query = request.POST.get('search_user', '').strip()
             group_name = request.POST.get('group_name', '').strip()
@@ -116,17 +117,27 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
 
             return redirect('app_folder:create_group')
 
+        # グループ作成処理
         elif action == "create":
             group_name = request.POST.get('group_name', '').strip()
             invited_users_ids = self.request.session.get('selected_users', [])
 
-            if group_name and invited_users_ids:
+            if group_name:
+                # グループを作成
                 group = CustomGroup.objects.create(name=group_name, owner=request.user)
+                
+                # 自分を必ずグループのメンバーとして追加
                 group.members.add(request.user)
-                invited_users = User.objects.filter(id__in=invited_users_ids)
-                group.members.add(*invited_users)
 
+                # 招待されたユーザーをグループに追加
+                if invited_users_ids:
+                    invited_users = User.objects.filter(id__in=invited_users_ids)
+                    group.members.add(*invited_users)
+
+                # 成功メッセージを表示
                 messages.success(request, f"グループ '{group_name}' を作成しました。")
+                
+                # セッションデータをクリア
                 self.request.session.pop('selected_users', None)
                 self.request.session.pop('current_group_name', None)
             else:
