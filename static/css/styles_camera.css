@@ -1,40 +1,37 @@
 /* 全体のレイアウト */
 body {
-    margin-top: 80px;
-  }
-  
-  .navbar {
+    margin-top: 90px; /* ナビゲーションバーとの間隔を調整 */
+}
+
+.navbar {
     background-color: cadetblue;
-  }
-  
-  .camera-container {
+}
+
+.camera-container {
     position: relative;
     margin-top: 20px;
     text-align: center;
-  }
-  
-  #video {
+}
+
+#preview {
     width: 100%;
     height: auto;
+    margin-top: 20px;
     border-radius: 10px;
-  }
-  
-  #preview {
-    width: 100%;
-    height: auto;
-    margin-top: 10px;
-    border-radius: 10px;
-  }
-  
-  .camera-controls {
-    margin-top: 10px;
-  }
-  
-  button {
-    font-size: 1rem;
-  }
-  
-  #show-camera-button {
+}
+
+button {
+    font-size: 1.2rem;
+    padding: 15px 25px;
+    margin: 10px 0;
+    width: 100%; /* ボタンを画面幅に合わせる */
+    max-width: 400px; /* 最大幅を設定 */
+    display: block; /* ブロック表示 */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#show-camera-button {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -45,19 +42,20 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  
-  @media screen and (max-width: 768px) {
-    /* スマホ対応 */
-    #video {
-      width: 100%;
-      height: auto;
-    }
-    #capture-button {
-      font-size: 1.2rem;
-    }
+}
+
+/* スマホ対応 */
+@media screen and (max-width: 768px) {
     .camera-container {
-      margin-top: 60px;
+        margin-top: 80px; /* スマホでもカメラのUIを見やすくする */
     }
-  }
-  
+
+    button {
+        font-size: 1.5rem; /* ボタンの文字サイズを大きく */
+        padding: 20px 30px; /* ボタンのパディングを増やして押しやすく */
+    }
+
+    #preview {
+        margin-top: 10px;
+    }
+}
