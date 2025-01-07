@@ -4,32 +4,37 @@
 {% block contents %}
 {% load custom_filters %}
 
+<!-- 修正済みのコード -->
 <div class="container group-create-container">
     <form method="post" id="group-form" class="group-form">
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
-        <div class="container-fluid">
-            <!-- 戻るボタン -->
-            <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;" onclick="window.location.href='{% url 'app_folder:home' %}'">
-                &#8592;
-            </button>
-            
-            <!-- タイトル -->
-            <span class="navbar-brand mx-auto" style="color: white; text-align: center;">グループ作成 {{ group.name }}</span>
-            
-            <!-- 作成ボタン -->
-            <button 
-                type="submit" 
-                name="action" 
-                value="create" 
-                id="create-btn" 
-                class="btn btn-success" 
-                style="font-size: 1rem; color: cadetblue; background-color: white; border: 1px solid white;">
-                作成
-            </button>
-        </div>
-    </nav>
-    
-   
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
+            <div class="container-fluid">
+                <!-- 戻るボタン -->
+                <button 
+                    id="back-button" 
+                    class="btn btn-link" 
+                    style="font-size: 1.5rem; color: white;" 
+                    type="button"
+                >
+                    &#8592;
+                </button>
+                
+                <!-- タイトル -->
+                <span class="navbar-brand mx-auto" style="color: white; text-align: center;">グループ作成 {{ group.name }}</span>
+                
+                <!-- 作成ボタン -->
+                <button 
+                    type="submit" 
+                    name="action" 
+                    value="create" 
+                    id="create-btn" 
+                    class="btn btn-success" 
+                    style="font-size: 1rem; color: cadetblue; background-color: white; border: 1px solid white;">
+                    作成
+                </button>
+            </div>
+        </nav>
+        
         {% csrf_token %}
 
         <!-- グループ名入力 -->
@@ -71,7 +76,8 @@
                         name="invited_users"
                         value="{{ result.id }}"
                         id="user_{{ result.id }}"
-                        class="form-check-input"
+                        class="form-check-input user-checkbox"
+                        data-username="{{ result.username }}"
                     >
                     <label class="form-check-label" for="user_{{ result.id }}">{{ result.username }}</label>
                 </li>
@@ -81,10 +87,10 @@
 
         <!-- 選択済みユーザー -->
         <div class="selected-users">
-            <ul class="list-group">
-                <h4>選択済みユーザー</h3>
+            <h4>選択済みユーザー</h4>
+            <ul class="list-group" id="selected-users-list">
                 {% for user_id in selected_users %}
-                <li class="list-group-item">
+                <li class="list-group-item" id="selected-user-{{ user_id }}">
                     {{ user_id|get_user_username }}
                 </li>
                 {% endfor %}
@@ -98,14 +104,27 @@
     document.addEventListener('DOMContentLoaded', function () {
         const groupNameInput = document.getElementById('group_name');
         const createBtn = document.getElementById('create-btn');
+        const backButton = document.getElementById('back-button');
+        const groupForm = document.getElementById('group-form');
 
+        // グループ名のバリデーション
         createBtn.disabled = !groupNameInput.value.trim();
-
         groupNameInput.addEventListener('input', function () {
             createBtn.disabled = !this.value.trim();
         });
+
+        // 戻るボタンの動作
+        backButton.addEventListener('click', function () {
+            // フォームのリセット
+            groupForm.reset();
+
+            // ホームページに遷移
+            window.location.href = "{% url 'app_folder:home' %}";
+        });
     });
 </script>
+
+
 
 
 {% endblock %}
