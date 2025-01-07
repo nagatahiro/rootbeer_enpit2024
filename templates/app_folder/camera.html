@@ -75,41 +75,59 @@
     fileInput.value = ''; // ファイル入力をリセット
   });
 
-  // 文字抽出
-  extractButton.addEventListener('click', () => {
-    if (!preview.src) {
-      alert('画像がありません。');
-      return;
+// 文字抽出
+extractButton.addEventListener('click', () => {
+  if (!preview.src) {
+    alert('画像がありません。');
+    return;
+  }
+
+  // 画像データが設定されていることを確認
+  const imageData = preview.src;
+  if (!imageData || imageData.indexOf('data:image/jpeg;base64,') !== 0) {
+    alert('無効な画像データです。');
+    return;
+  }
+
+  // Base64エンコードされた画像をBlobに変換
+  const byteString = atob(imageData.split(',')[1]);
+  const arrayBuffer = new ArrayBuffer(byteString.length);
+  const uintArray = new Uint8Array(arrayBuffer);
+  for (let i = 0; i < byteString.length; i++) {
+    uintArray[i] = byteString.charCodeAt(i);
+  }
+  const blob = new Blob([uintArray], { type: 'image/jpeg' });
+  
+  // FormDataを作成して送信
+  const formData = new FormData();
+  formData.append('image', blob);
+  formData.append('group_id', '{{ group.id }}');
+
+  fetch("{% url 'app_folder:photograph' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+    },
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success') {
+      const storeName = data.store_name || "";
+      const totalAmount = data.formatted_total || "";
+
+      // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
+      window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
+    } else {
+      alert(`エラー: ${data.message}`);
     }
-
-    fetch("{% url 'app_folder:photograph' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': '{{ csrf_token }}',
-      },
-      body: new URLSearchParams({
-        'image': preview.src,
-        'group_id': '{{ group.id }}'
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        const storeName = data.store_name || "";
-        const totalAmount = data.formatted_total || "";
-
-        // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
-        window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
-      } else {
-        alert(`エラー: ${data.message}`);
-      }
-    })
-    .catch(error => {
-      console.error('エラー:', error);
-      alert('処理中にエラーが発生しました。');
-    });
+  })
+  .catch(error => {
+    console.error('エラー:', error);
+    alert('処理中にエラーが発生しました。');
   });
+});
+
 </script>
 
 </body>

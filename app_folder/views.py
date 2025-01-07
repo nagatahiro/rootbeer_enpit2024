@@ -33,6 +33,11 @@ class SampleView(View):
 		return render(request, 'app_folder/top_page.html')
 top_page = SampleView.as_view()
 
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import base64
+import json
+
 class CameraView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/camera.html"
 
@@ -68,32 +73,33 @@ class CameraView(LoginRequiredMixin, TemplateView):
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(CustomGroup, id=group_id)
 
-        form = SplitBillForm(request.POST)
-        if form.is_valid():
-            amount = form.cleaned_data['amount']
-            members_count = form.cleaned_data['members_count']
-            selected_member_id = request.POST.get('selected_member')
-            store_name = request.POST.get('store_name', '')
+        # 画像データを取得
+        image_data = request.FILES.get('image')
+        if image_data:
+            # 画像ファイルの保存処理などを行う（例: ディスクに保存、OCR処理等）
+            # 画像データを一時ファイルとして保存
+            image_path = default_storage.save('images/temp_image.jpg', ContentFile(image_data.read()))
+            
+            # OCR処理を行って、store_nameとtotal_amountを取得する
+            store_name, total_amount = self.process_image_for_text(image_path)
 
-            # Validate members_count and calculate result
-            if members_count > 0:
-                result = amount / Decimal(members_count)
-                
-                # Store results in session
-                request.session.update({
-                    'result': float(result),
-                    'total_amount': float(amount),
-                    'store_name': store_name,
-                    'selected_member_id': selected_member_id,
-                })
+            # 結果を返す
+            return JsonResponse({
+                'status': 'success',
+                'store_name': store_name,
+                'formatted_total': total_amount,
+            })
 
-                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
-            else:
-                messages.error(request, "人数を1以上にしてください。")
-        else:
-            messages.error(request, "無効な入力です。")
+        return JsonResponse({'status': 'error', 'message': '画像が送信されていません。'})
 
-        return redirect('app_folder:camera', group_id=group_id)
+    def process_image_for_text(self, image_path):
+        # OCR処理（例: pytesseractを使う）
+        # ここではOCRライブラリを使って画像からテキストを抽出
+        # store_nameとtotal_amountを抽出して返す処理を実装
+        store_name = "店舗名"
+        total_amount = "1000"  # OCR結果から金額を抽出
+        return store_name, total_amount
+
 
 
 class TopView(TemplateView):
