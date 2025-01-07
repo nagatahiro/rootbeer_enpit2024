@@ -33,7 +33,67 @@ class SampleView(View):
 		return render(request, 'app_folder/top_page.html')
 top_page = SampleView.as_view()
 
+class CameraView(LoginRequiredMixin, TemplateView):
+    template_name = "app_folder/camera.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        # Retrieve session data
+        total_amount = self.request.session.pop('total_amount', None)
+        store_name = self.request.session.pop('store_name', None)
+        selected_member_id = self.request.session.pop('selected_member_id', None)
+
+        # Find the selected member if ID exists
+        selected_member = User.objects.filter(id=selected_member_id).first() if selected_member_id else None
+
+        # Add data to the context
+        context.update({
+            'form': SplitBillForm(initial={
+                'amount': total_amount,
+                'members_count': group.members.count()
+            }),
+            'group': group,
+            'members': group.members.all(),
+            'result': self.request.session.pop('result', None),
+            'store_name': store_name,
+            'selected_member': selected_member,
+            'total_amount': total_amount,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        form = SplitBillForm(request.POST)
+        if form.is_valid():
+            amount = form.cleaned_data['amount']
+            members_count = form.cleaned_data['members_count']
+            selected_member_id = request.POST.get('selected_member')
+            store_name = request.POST.get('store_name', '')
+
+            # Validate members_count and calculate result
+            if members_count > 0:
+                result = amount / Decimal(members_count)
+                
+                # Store results in session
+                request.session.update({
+                    'result': float(result),
+                    'total_amount': float(amount),
+                    'store_name': store_name,
+                    'selected_member_id': selected_member_id,
+                })
+
+                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
+            else:
+                messages.error(request, "人数を1以上にしてください。")
+        else:
+            messages.error(request, "無効な入力です。")
+
+        return redirect('app_folder:camera', group_id=group_id)
 
 
 class TopView(TemplateView):
@@ -278,6 +338,7 @@ class ShootingRegistration(LoginRequiredMixin, TemplateView):
             messages.error(request, "無効な入力です。")
 
         return redirect('app_folder:shooting_registration', group_id=group_id)
+
 
 
 class EditGroupView(LoginRequiredMixin, TemplateView):

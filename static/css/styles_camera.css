@@ -1,0 +1,63 @@
+/* 全体のレイアウト */
+body {
+    margin-top: 80px;
+  }
+  
+  .navbar {
+    background-color: cadetblue;
+  }
+  
+  .camera-container {
+    position: relative;
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  #video {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+  
+  #preview {
+    width: 100%;
+    height: auto;
+    margin-top: 10px;
+    border-radius: 10px;
+  }
+  
+  .camera-controls {
+    margin-top: 10px;
+  }
+  
+  button {
+    font-size: 1rem;
+  }
+  
+  #show-camera-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 2rem;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  @media screen and (max-width: 768px) {
+    /* スマホ対応 */
+    #video {
+      width: 100%;
+      height: auto;
+    }
+    #capture-button {
+      font-size: 1.2rem;
+    }
+    .camera-container {
+      margin-top: 60px;
+    }
+  }
+  
