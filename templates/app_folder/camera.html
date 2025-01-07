@@ -24,9 +24,8 @@
       <button id="capture-button" class="btn btn-outline-primary">撮影</button>
       <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
       <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
-      <!-- スマホ向けカメラ呼び出し -->
-      <input id="camera-input" type="file" accept="image/*" capture="camera" style="display:none;" />
-      <label for="camera-input" class="btn btn-outline-primary" id="take-photo-btn">スマホカメラで撮影</label>
+      <!-- スマホカメラから画像を取得するためのインプット -->
+      <input type="file" id="file-input" accept="image/*" capture="camera" style="display:none;">
     </div>
     <div id="result" class="mt-4"></div>
   </div>
@@ -43,12 +42,11 @@
   const captureButton = document.getElementById('capture-button');
   const retryButton = document.getElementById('retry-button');
   const extractButton = document.getElementById('extract-button');
+  const fileInput = document.getElementById('file-input');
   const resultDiv = document.getElementById('result');
-  const form = document.getElementById('split-calculation-form');
   const context = canvas.getContext('2d');
   let stream = null;
-  const cameraInput = document.getElementById('camera-input');
-
+  
   document.getElementById('back-button').addEventListener('click', function() {
     window.location.href = "{% url 'app_folder:group_detail' group.id %}";
   });
@@ -102,13 +100,41 @@
     extractButton.style.display = 'inline-block';
     stopCamera();
   });
+
+  // スマホの標準カメラで撮影
+  fileInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imageData = e.target.result;
+        
+        // キャンバスに画像を描画
+        const img = new Image();
+        img.onload = function() {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          context.drawImage(img, 0, 0);
+          const imageData = canvas.toDataURL('image/jpeg', 1.0);
+          preview.src = imageData;
+          video.style.display = 'none';
+          preview.style.display = 'block';
+          retryButton.style.display = 'inline-block';
+          extractButton.style.display = 'inline-block';
+        };
+        img.src = imageData;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
   
   // 再撮影
   retryButton.addEventListener('click', () => {
     startCamera(); // カメラを再起動
     preview.style.display = 'none'; // プレビュー画像を非表示
-    form.style.display = 'none'; // フォームを非表示
-    resetForm(); // フォームをリセット
+    retryButton.style.display = 'none'; // 再撮影ボタンを非表示
+    extractButton.style.display = 'none'; // 文字抽出ボタンを非表示
+    fileInput.value = ''; // ファイル入力をリセット
   });
   
   // 文字抽出
@@ -142,23 +168,7 @@
         console.error('エラー:', error);
         alert('処理中にエラーが発生しました。');
     });
-  });
-
-  // スマホのカメラで撮影
-  cameraInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        preview.src = e.target.result;
-        video.style.display = 'none';
-        preview.style.display = 'block';
-        retryButton.style.display = 'inline-block';
-        extractButton.style.display = 'inline-block';
-      };
-      reader.readAsDataURL(file);
-    }
-  });
+});
 
 </script>
 
