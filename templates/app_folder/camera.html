@@ -25,7 +25,6 @@
       style="display: none;">
     <img id="preview" width="100%" style="display: none;" alt="撮影画像のプレビュー">
     <div class="mt-2">
-      <button id="open-camera-button" class="btn btn-outline-primary">カメラを開く</button>
       <button id="retry-button" class="btn btn-warning" style="display: none;">再撮影</button>
       <button id="extract-button" class="btn btn-success" style="display: none;">文字抽出</button>
     </div>
@@ -36,7 +35,6 @@
 <script>
   const fileInput = document.getElementById('file-input');
   const preview = document.getElementById('preview');
-  const openCameraButton = document.getElementById('open-camera-button');
   const retryButton = document.getElementById('retry-button');
   const extractButton = document.getElementById('extract-button');
   const resultDiv = document.getElementById('result');
@@ -45,9 +43,9 @@
     window.location.href = "{% url 'app_folder:group_detail' group.id %}";
   });
 
-  // カメラを開くボタン
-  openCameraButton.addEventListener('click', () => {
-    fileInput.click(); // ファイル選択ダイアログを開く
+  // ページロード時にカメラを自動起動
+  document.addEventListener('DOMContentLoaded', () => {
+    fileInput.click();
   });
 
   // ファイル選択イベント
@@ -60,7 +58,6 @@
         preview.style.display = 'block';
         retryButton.style.display = 'inline-block';
         extractButton.style.display = 'inline-block';
-        openCameraButton.style.display = 'none';
       };
       reader.readAsDataURL(file);
     }
@@ -71,8 +68,8 @@
     preview.style.display = 'none'; // プレビューを非表示
     retryButton.style.display = 'none';
     extractButton.style.display = 'none';
-    openCameraButton.style.display = 'inline-block';
     fileInput.value = ''; // ファイル入力をリセット
+    fileInput.click(); // 再度カメラを開く
   });
 
   // 文字抽出
