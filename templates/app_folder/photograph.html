@@ -3,6 +3,7 @@
 {% block title %}撮影ページ{% endblock %}
 
 {% block contents %}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 <div class="container">
   <h1 class="text-center my-4">撮影ページ</h1>
   <div class="d-flex justify-content-center">
@@ -74,7 +75,7 @@
 
     console.log(imageData); 
 
-    
+
     preview.src = imageData;
     video.style.display = 'none';
     canvas.style.display = 'none';
