@@ -140,15 +140,18 @@
         if (data.status === 'success') {
             let totalAmount = data.formatted_total;
 
-            // 合計額から円マークを除去して数値に変換
-            if (typeof totalAmount === 'string') {
-                totalAmount = totalAmount.replace(/[^\d.-]/g, ''); // 円マークや他の記号を削除
+            // 合計額が取得できない場合は0を設定
+            if (!totalAmount || totalAmount.trim() === "") {
+                totalAmount = "0";
+            } else if (typeof totalAmount === 'string') {
+                // 合計額から円マークや不要な文字を除去して数値に変換
+                totalAmount = totalAmount.replace(/[^\d.-]/g, '');
             }
 
             console.log('数値として処理する合計額:', totalAmount);
 
             window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" 
-                + encodeURIComponent(data.store_name) 
+                + encodeURIComponent(data.store_name || '') 
                 + "&total_amount=" + encodeURIComponent(totalAmount);
         } else {
             alert(`エラー: ${data.message}`);
