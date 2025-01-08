@@ -33,8 +33,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [ '127.0.0.1','localhost','waripoke.xyz','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143']
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024 # 10MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 CSRF_TRUSTED_ORIGINS = [
     '127.0.0.1','localhost','waripoke.xyz','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143'  # または適切なドメイン
