@@ -121,7 +121,6 @@
 
     console.log('送信する画像データ:', imageData); // 保存ボタンを押した際のデバッグ
 
-    // 画像データ送信
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
         headers: {
@@ -137,22 +136,12 @@
     .then(data => {
         console.log('サーバーからのレスポンス:', data); // サーバーのレスポンス確認
 
+        // デフォルト値を設定
+        const storeName = data.store_name || ''; // 店名がない場合は空文字列
+        const totalAmount = data.formatted_total || 0; // 合計額がない場合は0
+
         if (data.status === 'success') {
-            let totalAmount = data.formatted_total;
-
-            // 合計額が取得できない場合は0を設定
-            if (!totalAmount || totalAmount.trim() === "") {
-                totalAmount = "0";
-            } else if (typeof totalAmount === 'string') {
-                // 合計額から円マークや不要な文字を除去して数値に変換
-                totalAmount = totalAmount.replace(/[^\d.-]/g, '');
-            }
-
-            console.log('数値として処理する合計額:', totalAmount);
-
-            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" 
-                + encodeURIComponent(data.store_name || '') 
-                + "&total_amount=" + encodeURIComponent(totalAmount);
+            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
         } else {
             alert(`エラー: ${data.message}`);
         }
