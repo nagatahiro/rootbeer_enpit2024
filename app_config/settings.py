@@ -68,8 +68,30 @@ MIDDLEWARE = [
 MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 
 
-CORS_ALLOWED_ORIGINS = ['127.0.0.1','localhost','waripoke.xyz','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143' 
+# settings.py
+
+# CSRF_TRUSTED_ORIGINS: スキームを追加
+CSRF_TRUSTED_ORIGINS = [
+    "http://10.10.0.179",
+    "http://10.10.1.143",
+    "http://127.0.0.1",
+    "http://162.43.90.122",
+    "http://192.168.0.110",
+    "http://localhost",
+    "https://waripoke.xyz",  # 必要なら https:// を使用
 ]
+
+# CORS_ALLOWED_ORIGINS: スキームを追加
+CORS_ALLOWED_ORIGINS = [
+    "http://10.10.0.179",
+    "http://10.10.1.143",
+    "http://127.0.0.1",
+    "http://162.43.90.122",
+    "http://192.168.0.110",
+    "http://localhost",
+    "https://waripoke.xyz",  # 必要なら https:// を使用
+]
+
 
 ROOT_URLCONF = 'app_config.urls'
 

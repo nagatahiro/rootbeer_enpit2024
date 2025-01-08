@@ -1,116 +1,151 @@
 {% extends "base.html" %}
-
 {% block title %}撮影ページ{% endblock %}
-
 {% block contents %}
 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-<div class="container">
-  <h1 class="text-center my-4">撮影ページ</h1>
-  <div class="d-flex justify-content-center">
-    <a href="{% url 'app_folder:home' %}" class="btn btn-secondary">ホームに戻る</a>
-  </div>
-
-  <!-- 撮影とプレビューエリア -->
-  <div class="camera-container mt-4">
-    <div class="text-center">
-      <video id="video" class="img-fluid" autoplay></video>
-      <canvas id="canvas" class="d-none"></canvas>
-      <img id="preview" class="img-fluid d-none" alt="撮影画像のプレビュー">
+<div class="container mt-5">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
+    <div class="container-fluid">
+      <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+        <i class="fas fa-arrow-left"></i> 
+      </button>
+      <span class="navbar-brand" style="color: white;">撮影画面</span>
+      <ul class="navbar-nav ms-auto d-flex flex-row">
+        <li class="nav-item">
+          <button id="retry-button" class="btn" style="display: none; background-color: cadetblue; color: white;">
+            <i class="fas fa-sync-alt fa-lg"></i>  <!-- アイコンサイズを大きく -->
+          </button>
+        </li>
+      </ul>
     </div>
-    <div class="text-center mt-3">
-      <button id="capture-button" class="btn btn-primary mx-2">撮影</button>
-      <button id="retry-button" class="btn btn-warning mx-2 d-none">再撮影</button>
-      <button id="extract-button" class="btn btn-success mx-2 d-none">文字抽出</button>
+  </nav>
+  
+  <!-- スマホカメラを呼び出すボタン -->
+  <button id="open-camera-button" class="btn btn-outline-primary"><i class="fa fa-camera"></i><br>カメラを起動</button>
+  
+  <!-- カメラ機能 -->
+  <div class="camera-container mt-4">
+    <video id="video" width="100%" autoplay style="display: none;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="preview" width="100%" style="display: none;" alt="撮影画像のプレビュー">
+    <div class="mt-2">
+      <button id="extract-button" class="btn btn-success w-100" style="display: none;"><i class="fas fa-save ms-2"></i> 保存</button>
+      <!-- スマホカメラから画像を取得するためのインプット -->
+      <input type="file" id="file-input" accept="image/*" capture="camera" style="display:none;">
     </div>
     <div id="result" class="mt-4"></div>
   </div>
 </div>
 
+<style>
+  #open-camera-button {
+    position: absolute;
+    top: 500%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10; /* ボタンが他の要素の上に表示されるように */
+  }
+</style>
+
 <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 初期状態でカメラを起動しないようにする
+  });
+
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const preview = document.getElementById('preview');
   const captureButton = document.getElementById('capture-button');
   const retryButton = document.getElementById('retry-button');
   const extractButton = document.getElementById('extract-button');
+  const fileInput = document.getElementById('file-input');
+  const openCameraButton = document.getElementById('open-camera-button');
   const resultDiv = document.getElementById('result');
   const context = canvas.getContext('2d');
   let stream = null;
 
-  // カメラを起動
-  const startCamera = () => {
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(cameraStream => {
-        stream = cameraStream;
-        video.srcObject = stream;
-        video.style.display = 'block';
-        canvas.style.display = 'none';
-        preview.style.display = 'none';
-        retryButton.style.display = 'none';
-        extractButton.style.display = 'none';
-        captureButton.style.display = 'inline-block';
-        resultDiv.innerHTML = '';
-      })
-      .catch(error => {
-        console.error("カメラのアクセスに失敗しました:", error);
-      });
-  };
+  // 戻るボタン
+  document.getElementById('back-button').addEventListener('click', function() {
+    window.location.href = "{% url 'app_folder:group_detail' group.id %}";
+  });
+  
+  // スマホカメラを開くボタン
+  openCameraButton.addEventListener('click', () => {
+    fileInput.click();  // カメラを呼び出す
+  });
 
-  // カメラを停止
-  const stopCamera = () => {
-    if (stream) {
-      const tracks = stream.getTracks();
-      tracks.forEach(track => track.stop());
-      stream = null;
+  // スマホの標準カメラで撮影
+  fileInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const imageData = e.target.result;
+        console.log(imageData); 
+        // キャンバスに画像を描画
+        const img = new Image();
+        img.onload = function() {
+          // キャンバスのサイズを画像のサイズに合わせる
+          canvas.width = img.width;
+          canvas.height = img.height;
+          context.drawImage(img, 0, 0);
+          
+          // 画像データをデータURLとして取得
+          const imageData = canvas.toDataURL('image/jpeg', 1.0);  // 画質を最大（1.0）に設定
+          preview.src = imageData;
+          
+          // プレビュー表示とボタン表示
+          video.style.display = 'none';
+          preview.style.display = 'block';
+          openCameraButton.style.display = 'none';  // スマホカメラボタンを非表示
+          retryButton.style.display = 'inline-block';
+          extractButton.style.display = 'inline-block';
+        };
+        img.src = imageData;
+      };
+      reader.readAsDataURL(file);
     }
-  };
-
-  // 初期化
-  startCamera();
-
-  // 撮影
-  captureButton.addEventListener('click', () => {
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = canvas.toDataURL('image/jpeg');
-
-    console.log(imageData); 
-
-
-    preview.src = imageData;
-    video.style.display = 'none';
-    canvas.style.display = 'none';
-    preview.style.display = 'block';
-    retryButton.style.display = 'inline-block';
-    extractButton.style.display = 'inline-block';
-    stopCamera(); // カメラを停止
   });
 
   // 再撮影
   retryButton.addEventListener('click', () => {
-    startCamera();
+    preview.style.display = 'none'; // プレビュー画像を非表示
+    retryButton.style.display = 'none'; // 再撮影ボタンを非表示
+    extractButton.style.display = 'none'; // 文字抽出ボタンを非表示
+    fileInput.value = ''; // ファイル入力をリセット
+    openCameraButton.style.display = 'inline-block'; // カメラボタンを再表示
   });
-
+  
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const imageData = canvas.toDataURL('image/jpeg');
+    const imageData = canvas.toDataURL('image/jpeg', 1.0);
+
+    console.log('送信する画像データ:', imageData); // 保存ボタンを押した際のデバッグ
 
     fetch("{% url 'app_folder:photograph' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': '{{ csrf_token }}',
-      },
-      body: new URLSearchParams({ 'image': imageData })
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: new URLSearchParams({
+            'image': imageData,
+            'group_id': '{{ group.id }}'
+        })
     })
     .then(response => response.json())
     .then(data => {
-      if (data.status === 'success') {
-        resultDiv.innerHTML = `<h3>抽出された文字:</h3><pre>${data.extracted_text}</pre>`;
-      } else {
-        alert(`エラー: ${data.message}`);
-      }
+        console.log('サーバーからのレスポンス:', data); // サーバーのレスポンス確認
+        if (data.status === 'success') {
+            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(data.store_name) + "&total_amount=" + encodeURIComponent(data.formatted_total);
+        } else {
+            alert(`エラー: ${data.message}`);
+        }
     })
-    .catch(error => console.error('エラー:', error));
+    .catch(error => {
+        console.error('通信エラー:', error); // エラー内容のデバッグ
+        alert('処理中にエラーが発生しました。');
+    });
   });
+
 </script>
 {% endblock %}
