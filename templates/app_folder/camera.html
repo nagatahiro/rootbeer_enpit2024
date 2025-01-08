@@ -90,7 +90,7 @@
           context.drawImage(img, 0, 0);
           
           // 画像データをデータURLとして取得
-          const imageData = canvas.toDataURL('image/jpeg', 0.5);  // 画質を最大（1.0）に設定
+          const imageData = canvas.toDataURL('image/jpeg', 0.4);  // 画質を最大（1.0）に設定
           preview.src = imageData;
           
           // プレビュー表示とボタン表示
@@ -117,7 +117,7 @@
   
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const imageData = canvas.toDataURL('image/jpeg', 0.5);
+    const imageData = canvas.toDataURL('image/jpeg', 0.4);
 
     console.log('送信する画像データ:', imageData); // 保存ボタンを押した際のデバッグ
 
