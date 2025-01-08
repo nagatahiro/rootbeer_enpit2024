@@ -121,6 +121,7 @@
 
     console.log('送信する画像データ:', imageData); // 保存ボタンを押した際のデバッグ
 
+    // 画像データ送信
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
         headers: {
@@ -135,8 +136,20 @@
     .then(response => response.json())
     .then(data => {
         console.log('サーバーからのレスポンス:', data); // サーバーのレスポンス確認
+
         if (data.status === 'success') {
-            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(data.store_name) + "&total_amount=" + encodeURIComponent(data.formatted_total);
+            let totalAmount = data.formatted_total;
+
+            // 合計額から円マークを除去して数値に変換
+            if (typeof totalAmount === 'string') {
+                totalAmount = totalAmount.replace(/[^\d.-]/g, ''); // 円マークや他の記号を削除
+            }
+
+            console.log('数値として処理する合計額:', totalAmount);
+
+            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" 
+                + encodeURIComponent(data.store_name) 
+                + "&total_amount=" + encodeURIComponent(totalAmount);
         } else {
             alert(`エラー: ${data.message}`);
         }
@@ -145,7 +158,8 @@
         console.error('通信エラー:', error); // エラー内容のデバッグ
         alert('処理中にエラーが発生しました。');
     });
-  });
+});
+
 
 </script>
 {% endblock %}
