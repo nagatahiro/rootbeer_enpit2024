@@ -18,8 +18,11 @@ services:
     command: sh -c "/usr/local/bin/entrypoint.sh"
 
     networks:
-      default:
-        name: nagat_network
+      - nagat_network  # ネットワーク名を指定する
+
+networks:
+  nagat_network:  # カスタムネットワークを定義する
+    name: nagat_network 
 
 
 
