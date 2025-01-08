@@ -17,4 +17,9 @@ services:
       - ../.env
     command: sh -c "/usr/local/bin/entrypoint.sh"
 
+    networks:
+      default:
+        name: nagat_network
+
+
 
