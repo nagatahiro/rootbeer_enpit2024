@@ -1,105 +1,60 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.views.generic import TemplateView  
+from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView
-from django.http import HttpResponseRedirect, JsonResponse
+from django.contrib.auth import login
+from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.views.generic.edit import CreateView
-from django.contrib.auth import login
-from django.urls import reverse
-from .forms import SignUpForm
-from django.contrib import messages
-from django.contrib.auth.models import Group
-from django.contrib.auth.models import User
-from .models import CustomGroup
-from django.shortcuts import render, get_object_or_404
-from .models import CustomGroup
-from .forms import SplitBillForm
 from django.db.models import Q
-import logging
-logger = logging.getLogger(__name__)
-from . import forms
+from django.db import connections, transaction
+from django.http import HttpResponseRedirect, JsonResponse
+from django.contrib.auth.models import Group, User
+from .models import CustomGroup, Purchase
+from .forms import SignUpForm, SplitBillForm
 from google.cloud import vision
-
+from . import forms
+import logging
 import numpy as np
 import cv2
 import base64
 from pytesseract import image_to_string
 import os
-
-class SampleView(View):  
-	def get(self, request, *args, **kwargs):  
-		return render(request, 'app_folder/top_page.html')
-top_page = SampleView.as_view()
-
-class CameraView(LoginRequiredMixin, TemplateView):
-    template_name = "app_folder/camera.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-
-        # Retrieve session data
-        total_amount = self.request.session.pop('total_amount', None)
-        store_name = self.request.session.pop('store_name', None)
-        selected_member_id = self.request.session.pop('selected_member_id', None)
-
-        # Find the selected member if ID exists
-        selected_member = User.objects.filter(id=selected_member_id).first() if selected_member_id else None
-
-        # Add data to the context
-        context.update({
-            'form': SplitBillForm(initial={
-                'amount': total_amount,
-                'members_count': group.members.count()
-            }),
-            'group': group,
-            'members': group.members.all(),
-            'result': self.request.session.pop('result', None),
-            'store_name': store_name,
-            'selected_member': selected_member,
-            'total_amount': total_amount,
-        })
-        return context
-
-    def post(self, request, *args, **kwargs):
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-
-        form = SplitBillForm(request.POST)
-        if form.is_valid():
-            amount = form.cleaned_data['amount']
-            members_count = form.cleaned_data['members_count']
-            selected_member_id = request.POST.get('selected_member')
-            store_name = request.POST.get('store_name', '')
-
-            # Validate members_count and calculate result
-            if members_count > 0:
-                result = amount / Decimal(members_count)
-                
-                # Store results in session
-                request.session.update({
-                    'result': float(result),
-                    'total_amount': float(amount),
-                    'store_name': store_name,
-                    'selected_member_id': selected_member_id,
-                })
-
-                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
-            else:
-                messages.error(request, "人数を1以上にしてください。")
-        else:
-            messages.error(request, "無効な入力です。")
-
-        return redirect('app_folder:camera', group_id=group_id)
+from decimal import Decimal
+import re
 
 
+logger = logging.getLogger(__name__)
+
+#ログアウト時にリダイレクトされるビュー
 class TopView(TemplateView):
     template_name = "app_folder/top.html"
 
+#ログイン時に使用
+class LoginView(LoginView):
+    """ログインページ"""
+    form_class = forms.LoginForm
+    template_name = "app_folder/login.html"
+
+#ログアウト時に使用
+class LogoutView(LoginRequiredMixin, LogoutView):
+    """ログアウトページ"""
+    template_name = "app_folder:top"
+
+#アカウント作成の際に使用
+class SignUp(CreateView):
+    form_class = SignUpForm
+    template_name = "app_folder/signup.html"
+    success_url = reverse_lazy('app_folder:home')
+
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        self.object = user
+        return HttpResponseRedirect(self.get_success_url())
+    
+#グループ一覧が表示されるページ
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/home.html"
 
@@ -121,27 +76,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
         context['groups_with_members'] = groups_with_members
         return context
 
-
-class LoginView(LoginView):
-    """ログインページ"""
-    form_class = forms.LoginForm
-    template_name = "app_folder/login.html"
-
-class LogoutView(LoginRequiredMixin, LogoutView):
-    """ログアウトページ"""
-    template_name = "app_folder:top"
-
-class SignUp(CreateView):
-    form_class = SignUpForm
-    template_name = "app_folder/signup.html"
-    success_url = reverse_lazy('app_folder:home')
-
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)
-        self.object = user
-        return HttpResponseRedirect(self.get_success_url())
-
+#グループ作成の際に使用する
 class CreateGroupView(LoginRequiredMixin, TemplateView):
     """グループ作成ページ"""
     template_name = "app_folder/create_group.html"
@@ -215,133 +150,7 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
 
             return redirect('app_folder:home')
         
-        
-
-class AddFriendPageView(LoginRequiredMixin, TemplateView):
-    template_name = "app_folder/add_friend.html"
-
-    def post(self, request, *args, **kwargs):
-        # フレンド追加処理
-        friend_name = request.POST.get('friend_name')
-        print(f"フレンド '{friend_name}' を追加しました。")
-        return redirect('app_folder:home')
-    
-from decimal import Decimal
-class GroupDetailView(LoginRequiredMixin, TemplateView):
-    template_name = "app_folder/group_detail.html"
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-        members_count = group.members.count()
-
-        # セッションからデータを取得
-        total_amount = self.request.session.pop('total_amount', None)
-        store_name = self.request.session.pop('store_name', None)
-        selected_member_id = self.request.session.pop('selected_member_id', None)
-
-        # 選択されたメンバーの取得
-        selected_member = None
-        if selected_member_id:
-            selected_member = User.objects.filter(id=selected_member_id).first()
-
-        context['form'] = SplitBillForm(initial={
-            'amount': total_amount,
-            'members_count': members_count
-            
-        })
-        context['group'] = group
-        context['members'] = group.members.all()
-        context['result'] = self.request.session.pop('result', None)
-        context['store_name'] = store_name
-        context['selected_member'] = selected_member
-        context['total_amount'] = total_amount
-        return context
-
-    def post(self, request, *args, **kwargs):
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-
-        form = SplitBillForm(request.POST)
-        if form.is_valid():
-            amount = form.cleaned_data['amount']
-            members_count = form.cleaned_data['members_count']
-            selected_member_id = request.POST.get('selected_member')
-            store_name = request.session.get('store_name')
-
-            if members_count > 0:
-                result = amount / Decimal(members_count)
-                request.session['result'] = float(result)
-                request.session['total_amount'] = float(amount)
-                request.session['store_name'] = store_name
-                request.session['selected_member_id'] = selected_member_id
-                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
-            else:
-                messages.error(request, "人数を1以上にしてください。")
-        else:
-            messages.error(request, "無効な入力です。")
-
-        return redirect('app_folder:group_detail', group_id=group_id)
-
-from decimal import Decimal
-class ShootingRegistration(LoginRequiredMixin, TemplateView):
-    template_name = "app_folder/shooting_registration.html"
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-        members_count = group.members.count()
-
-        # セッションからデータを取得
-        total_amount = self.request.session.pop('total_amount', None)
-        store_name = self.request.session.pop('store_name', None)
-        selected_member_id = self.request.session.pop('selected_member_id', None)
-
-        # 選択されたメンバーの取得
-        selected_member = None
-        if selected_member_id:
-            selected_member = User.objects.filter(id=selected_member_id).first()
-
-        context['form'] = SplitBillForm(initial={
-            'amount': total_amount,
-            'members_count': members_count
-            
-        })
-        context['group'] = group
-        context['members'] = group.members.all()
-        context['result'] = self.request.session.pop('result', None)
-        context['store_name'] = store_name
-        context['selected_member'] = selected_member
-        context['total_amount'] = total_amount
-        return context
-
-    def post(self, request, *args, **kwargs):
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-
-        form = SplitBillForm(request.POST)
-        if form.is_valid():
-            amount = form.cleaned_data['amount']
-            members_count = form.cleaned_data['members_count']
-            selected_member_id = request.POST.get('selected_member')
-            store_name = request.session.get('store_name')
-
-            if members_count > 0:
-                result = amount / Decimal(members_count)
-                request.session['result'] = float(result)
-                request.session['total_amount'] = float(amount)
-                request.session['store_name'] = store_name
-                request.session['selected_member_id'] = selected_member_id
-                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
-            else:
-                messages.error(request, "人数を1以上にしてください。")
-        else:
-            messages.error(request, "無効な入力です。")
-
-        return redirect('app_folder:shooting_registration', group_id=group_id)
-
-
-
+#グループを編集する際に使用
 class EditGroupView(LoginRequiredMixin, TemplateView):
     """グループ編集ページ"""
     template_name = "app_folder/edit_group.html"
@@ -398,6 +207,242 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
         # 成功後にリダイレクトする URL を指定
         return reverse('app_folder:home')
 
+#カメラ起動と文字抽出の際のビュー
+class CameraView(LoginRequiredMixin, TemplateView):
+    template_name = "app_folder/camera.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        # Retrieve session data
+        total_amount = self.request.session.pop('total_amount', None)
+        store_name = self.request.session.pop('store_name', None)
+        selected_member_id = self.request.session.pop('selected_member_id', None)
+
+        # Find the selected member if ID exists
+        selected_member = User.objects.filter(id=selected_member_id).first() if selected_member_id else None
+
+        # Add data to the context
+        context.update({
+            'form': SplitBillForm(initial={
+                'amount': total_amount,
+                'members_count': group.members.count()
+            }),
+            'group': group,
+            'members': group.members.all(),
+            'result': self.request.session.pop('result', None),
+            'store_name': store_name,
+            'selected_member': selected_member,
+            'total_amount': total_amount,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        form = SplitBillForm(request.POST)
+        if form.is_valid():
+            amount = form.cleaned_data['amount']
+            members_count = form.cleaned_data['members_count']
+            selected_member_id = request.POST.get('selected_member')
+            store_name = request.POST.get('store_name', '')
+
+            # Validate members_count and calculate result
+            if members_count > 0:
+                result = amount / Decimal(members_count)
+                
+                # Store results in session
+                request.session.update({
+                    'result': float(result),
+                    'total_amount': float(amount),
+                    'store_name': store_name,
+                    'selected_member_id': selected_member_id,
+                })
+
+                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
+            else:
+                messages.error(request, "人数を1以上にしてください。")
+        else:
+            messages.error(request, "無効な入力です。")
+
+        return redirect('app_folder:camera', group_id=group_id)
+from django.db.models import Sum
+
+#グループのホームページ、自身の収支が確認できる
+class GroupDetailView(LoginRequiredMixin, TemplateView):
+    template_name = "app_folder/group_detail.html"
+
+
+
+    from decimal import Decimal
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        # 合計金額計算
+        purchases = Purchase.objects.filter(group=group).order_by('-date')  # データの降順
+        total_amount = Decimal(purchases.aggregate(Sum('total_amount'))['total_amount__sum'] or 0)
+
+        # ユーザーごとの損益計算
+        members = group.members.all()
+        user_totals = {user: Decimal(purchases.filter(user=user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0) for user in members}
+        num_members = Decimal(len(members))
+
+        # 損失計算
+        user_losses = {
+            user.username: round(((user_totals[user] / num_members) * (num_members - Decimal(1))) - ((total_amount - user_totals[user]) / num_members), 2)
+            for user in members
+        }
+
+        # 支払い計算
+        payments = {}
+        for payer in members:
+            for payee in members:
+                if payer != payee:
+                    payer_amount = user_totals[payer] / num_members
+                    payee_amount = user_totals[payee] / num_members
+                    amount_to_pay = round(payer_amount - payee_amount, 2)
+                    if amount_to_pay > 0:
+                        if payer.username not in payments:
+                            payments[payer.username] = {}
+                        payments[payer.username][payee.username] = amount_to_pay
+
+        context.update({
+            'group': group,
+            'members': members,
+            'total_amount': total_amount,
+            'user_losses': user_losses,
+            'payments': payments,
+            'purchases': purchases,  # 購入データをテンプレートに渡す
+        })
+        return context
+
+
+    def post(self, request, *args, **kwargs):
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        form = SplitBillForm(request.POST)
+        if form.is_valid():
+            amount = form.cleaned_data['amount']
+            members_count = form.cleaned_data['members_count']
+            selected_member_id = request.POST.get('selected_member')
+            store_name = request.session.get('store_name')
+
+            if members_count > 0:
+                result = amount / Decimal(members_count)
+                request.session['result'] = float(result)
+                request.session['total_amount'] = float(amount)
+                request.session['store_name'] = store_name
+                request.session['selected_member_id'] = selected_member_id
+                messages.success(request, f"1人あたりの金額: ¥{round(result, 2)}")
+            else:
+                messages.error(request, "人数を1以上にしてください。")
+        else:
+            print("Form is valid:", form.is_valid()) 
+            print(form.errors)  # エラー内容を表示
+            logger.error(f"Form is invalid: {form.errors}")
+            messages.error(request, "無効な入力です。")
+
+        return redirect('app_folder:group_detail', group_id=group_id)
+
+
+#購入時の登録の際に使用
+from django.shortcuts import redirect
+from django.contrib import messages
+import logging
+import re
+from decimal import Decimal
+from django.db import transaction
+
+class ShootingRegistration(LoginRequiredMixin, TemplateView):
+    template_name = "app_folder/shooting_registration.html"
+    logger = logging.getLogger(__name__)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        # セッションからデータを取得（デフォルト値を設定）
+        total_amount = self.request.session.get('total_amount', None)
+        store_name = self.request.session.get('store_name', None)
+        selected_member_id = self.request.session.get('selected_member_id', None)
+
+        selected_member = User.objects.filter(id=selected_member_id).first() if selected_member_id else None
+
+        context.update({
+            'form': SplitBillForm(initial={
+                'selected_member': selected_member_id,  # selected_member_id を初期値として渡す
+                'store_name': store_name,  # store_name を初期値として渡す
+            }, group_id=group_id),  # group_id をフォームに渡す
+            'group': group,
+            'members': group.members.all(),
+            'result': self.request.session.get('result', None),
+            'store_name': store_name,
+            'selected_member': selected_member,
+            'total_amount': total_amount,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        form = SplitBillForm(request.POST, group_id=group_id)
+        if form.is_valid():
+            selected_member_id = request.POST.get('selected_member')
+            store_name = form.cleaned_data.get('store_name')
+            total_amount_input = request.POST.get('total_amount')  # フォームから送信された金額を取得
+
+            # 金額の整形（円マークやその他の文字を除去）
+            total_amount_clean = re.sub(r'[^\d.]', '', str(total_amount_input))
+
+            try:
+                # 金額をDecimal型に変換して保存
+                total_amount_decimal = Decimal(total_amount_clean)
+
+                with transaction.atomic():
+                    # 選択されたメンバーの取得
+                    selected_member = User.objects.get(id=selected_member_id)
+                    group = CustomGroup.objects.get(id=group_id)
+
+                    # Purchaseインスタンスを作成
+                    purchase = Purchase.objects.create(
+                        group=group,  # group を ForeignKey として保存
+                        user=selected_member,
+                        total_amount=total_amount_decimal,  # Decimal型で保存
+                        store_name=store_name
+                    )
+
+                    # セッションの更新（もし必要なら）
+                    request.session['purchase_id'] = purchase.id
+
+                    # セッションのクリア
+                    request.session['total_amount'] = None
+                    request.session['store_name'] = None
+                    request.session['selected_member_id'] = None
+
+                    # 成功メッセージ
+                    messages.success(request, "購入情報が保存されました。")
+
+            except Exception as e:
+                messages.error(request, "購入情報の保存に失敗しました。詳細: {}".format(str(e)))
+                logger.error(f"Error saving purchase: {e}")
+        else:
+            logger.error(f"Form errors: {form.errors}")
+            messages.error(request, "無効な入力です。")
+
+        # リダイレクト先に group_id を追加
+        return redirect('app_folder:group_detail', group_id=group_id)
+
+
+#レシートから抽出する際に使用
 class PhotographView(View):
     def get(self, request, *args, **kwargs):
         return render(request, 'app_folder/photograph.html')
@@ -525,6 +570,7 @@ class PhotographView(View):
         except Exception as e:
             logger.error(f"エラー: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)})
+
 
 # EditGroupViewをedit_groupとしてエクスポート
 edit_group = EditGroupView.as_view()

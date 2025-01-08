@@ -7,7 +7,7 @@
       <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
         <i class="fas fa-arrow-left"></i> 
       </button>
-      <span class="navbar-brand" style="color: white;">{{ group.name }} ({{ members.count }})</span>
+      <span class="navbar-brand text-truncate" style="color: white; max-width: 60%;">{{ group.name }} ({{ members.count }})</span>
       <ul class="navbar-nav ms-auto d-flex flex-row">
         <li class="nav-item">
           <a href="{% url 'app_folder:edit_group' group.id %}" id="edit-icon" class="btn btn-link" style="font-size: 1.5rem; color: white;">
@@ -22,80 +22,127 @@
       </ul>
     </div>
   </nav>
-  <section id="toggle-section" class="menu-section mb-4 card shadow-sm" style="display: none; margin-top: 60px; border-radius: 10px; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; background-color: rgba(0, 0, 0, 0.5);">
-    <div class="card-header d-flex justify-content-between" style="background-color: cadetblue; color: white; border-radius: 10px 10px 0 0;">
-        <h4 class="mb-0">グループ詳細</h4>
-        <!-- 閉じるボタン（右上） -->
-        <button id="close-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
-            <i class="fas fa-times"></i> 
-        </button>
+
+  <section id="toggle-section" class="menu-section card shadow-sm" style="display: none; margin-top: 60px; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; background-color: rgba(0, 0, 0, 0.5);">
+    <div class="card-header d-flex justify-content-between" style="background-color: cadetblue; color: white;">
+      <h4 class="mb-0">グループ詳細</h4>
+      <button id="close-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+        <i class="fas fa-times"></i> 
+      </button>
     </div>
-    <div class="card-body" style="background-color: white; padding: 20px; height: calc(100% - 60px); overflow-y: auto;">
-        <div class="mb-4">
-          <h5 class="text-muted">グループ名</h5>
-          <p class="text-dark" style="font-size: 1.1rem; font-weight: bold;">{{ group.name }}</p>
-        </div>
-        <!-- グループの所有者 -->
-        <div class="mb-4">
-            <h5 class="text-muted">グループの所有者</h5>
-            <p class="text-dark" style="font-size: 1.1rem; font-weight: bold;">{{ group.owner.username }}</p>
-        </div>
-        
-        <!-- メンバーリスト -->
-        <div>
-          <h5 class="text-muted">メンバー({{ members.count }}人)</h5>
-          <ul class="list-group" style="border-radius: 10px;">
-              {% for member in members %}
-                  <li class="list-group-item" style="border: none; padding: 10px 15px;">
-                      <span class="text-dark" style="font-size: 1.1rem;">{{ member.username }}</span>
-                  </li>
-              {% endfor %}
-          </ul>
+    <div class="card-body overflow-auto" style="background-color: white; padding: 20px;">
+      <div class="mb-3">
+        <h5 class="text-muted">グループ名</h5>
+        <p class="text-dark fw-bold">{{ group.name }}</p>
+      </div>
+      <div class="mb-3">
+        <h5 class="text-muted">グループの所有者</h5>
+        <p class="text-dark fw-bold">{{ group.owner.username }}</p>
+      </div>
+      <div>
+        <h5 class="text-muted">メンバー({{ members.count }}人)</h5>
+        <ul class="list-group">
+          {% for member in members %}
+          <li class="list-group-item p-2">{{ member.username }}</li>
+          {% endfor %}
+        </ul>
       </div>
     </div>
-</section>
-<!-- 完成イメージ -->
-<div class="text-center" style="margin-top: 20px;">
-  <h5 class="text-muted">あなたの支払額は</h5>
-  <h2 id="payment-amount" class="text-success" style="font-size: 2.5rem; font-weight: bold;">-100円</h2> <!-- 支払額の表示部分 -->
-  <ul>
-    <li>花子さんに100円払う</li>
-    <li>花さんから100円もらう</li>
-    <li>太郎さんに100円払う</li>
-  </ul>
-  <p>※上記に表示されいる値はデモです。</p>
-</div>
+  </section>
 
-<form action="{% url 'app_folder:shooting_registration' group.id %}" method="POST" id="shooting-form">
-  {% csrf_token %}
-  <button type="submit" class="btn btn-primary" style="position: fixed; bottom: 20px; right: 20px; font-size: 2rem; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background-color: cadetblue; border: none;">
-    <i class="fas fa-pen" style="color: white;"></i>
-  </button>
-</form>
+  <div class="d-flex flex-column align-items-center text-center mb-4">
+    {% for user, loss in user_losses.items %}
+      {% if user == request.user.username %}
+      <p class="text-dark mb-1">あなたの損益は</p>
+      <p style="font-size: 2rem; font-weight: bold; color: {% if loss >= 0 %}green{% else %}red{% endif %};">{{ loss }}円</p>
+      {% endif %}
+    {% endfor %}
+  </div>
 
+  <div class="mb-4">
+    <h5 class="text-muted">あなたの関連支払い</h5>
+    <ul class="list-group">
+      {% for payer, payees in payments.items %}
+        {% for payee, amount in payees.items %}
+          {% if payer == request.user.username or payee == request.user.username %}
+          <li class="list-group-item">
+            <span class="text-dark">{% if payer == request.user.username %}{{ payee }}から¥{{ amount }}受け取る{% else %}{{ payer }}に¥{{ amount }}渡す{% endif %}</span>
+          </li>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </ul>
+  </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const toggleButton = document.getElementById('toggle-button');
-    const toggleSection = document.getElementById('toggle-section');
-    const closeButton = document.getElementById('close-button');
-    const backButton = document.getElementById('back-button');
+  <div class="mb-4">
+    <h5 class="text-muted">詳細</h5>
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>店名</th>
+            <th>金額</th>
+            <th>ユーザー</th>
+            <th>時間</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for purchase in purchases %}
+          <tr>
+            <td>{{ purchase.store_name }}</td>
+            <td>¥{{ purchase.total_amount }}</td>
+            <td>{{ purchase.user.username }}</td>
+            <td>{{ purchase.date|date:"Y-m-d H:i:s" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-    // 詳細セクションの表示/非表示を切り替え
-    toggleButton.addEventListener('click', function () {
+  <form action="{% url 'app_folder:shooting_registration' group.id %}" id="shooting-form">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary position-fixed" style="bottom: 20px; right: 20px; font-size: 2rem; border-radius: 50%; width: 60px; height: 60px; background-color: cadetblue; border: none;">
+      <i class="fas fa-pen"></i>
+    </button>
+  </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const toggleButton = document.getElementById('toggle-button');
+      const toggleSection = document.getElementById('toggle-section');
+      const closeButton = document.getElementById('close-button');
+      const backButton = document.getElementById('back-button');
+
+      toggleButton.addEventListener('click', function () {
         toggleSection.style.display = 'block';
-    });
+      });
 
-    // 閉じるボタンをクリックしたときに詳細セクションを非表示
-    closeButton.addEventListener('click', function () {
+      closeButton.addEventListener('click', function () {
         toggleSection.style.display = 'none';
-    });
+      });
 
-    // バックボタンをクリックしてホームページに戻る
-    backButton.addEventListener('click', function() {
+      backButton.addEventListener('click', function () {
         window.location.href = "{% url 'app_folder:home' %}";
+      });
     });
-  });
-</script>
+  </script>
 
+  <style>
+    @media (max-width: 576px) {
+      .navbar-brand {
+        font-size: 1rem;
+      }
+      .btn-link {
+        font-size: 1.2rem;
+      }
+      h5, p {
+        font-size: 0.9rem;
+      }
+      .table th, .table td {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</div>
 {% endblock %}

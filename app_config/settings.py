@@ -121,7 +121,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': str(BASE_DIR / 'db.sqlite3'),
-    }
+    },
 }
 
 
@@ -175,3 +175,5 @@ LOGIN_REDIRECT_URL = "app_folder:home"      ### 追加
 LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ##＃追加
+
+

@@ -31,29 +31,33 @@
         <h3>支払いする人</h3>
         <select name="selected_member" required class="form-control">
             {% for member in members %}
-                <option value="{{ member.id }}">{{ member.username }}</option>
+                <option value="{{ member.id }}" {% if member.id == request.user.id %} selected {% endif %}>
+                    {{ member.username }}
+                </option>
             {% endfor %}
         </select>
 
         <!-- 店名入力 -->
         <h4>店名</h4>
-        <input type="text" name="store_name" class="form-control" required placeholder="店名を入力してください" value="{{ request.GET.store_name }}">
+        <input type="text" name="store_name" class="form-control" required placeholder="店名を入力してください" value="{{ store_name|default:'' }}">
+
 
         <!-- 合計金額入力 -->
         <h4>合計金額</h4>
-        <input type="text" name="total_amount" class="form-control" required placeholder="金額を入力してください" value="{{ request.GET.total_amount }}">
+        <input type="text" name="total_amount" class="form-control" required placeholder="金額を入力してください" value="{{ total_amount|default:'' }}">
         
         <!-- 送信ボタン（中央、大きめ） -->
         <button type="submit" class="btn btn-success btn-lg" style="width: 100%; margin-top: 30px;">登録</button>
     </form>
+
+
 </div>
 <script>
-  document.getElementById('back-button').addEventListener('click', function() {
-    // フォームのリセット
-    document.getElementById('split-calculation-form').reset();
+
+    document.getElementById('back-button').addEventListener('click', function() {
+        // group_detailページへ遷移
+        window.location.href = "{% url 'app_folder:group_detail' group.id %}";
+    });
     
-    // group_detailページへ遷移
-    window.location.href = "{% url 'app_folder:group_detail' group.id %}";
-  });
 </script>
 {% endblock %}
