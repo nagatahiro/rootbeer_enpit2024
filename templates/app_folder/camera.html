@@ -117,9 +117,7 @@
   
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const imageData = canvas.toDataURL('image/jpeg', 0.4);
-
-    console.log('送信する画像データ:', imageData); // 保存ボタンを押した際のデバッグ
+    const imageData = canvas.toDataURL('image/jpeg', 0.4);  // 画質を最大（1.0）に設定
 
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
@@ -134,20 +132,18 @@
     })
     .then(response => response.json())
     .then(data => {
-        console.log('サーバーからのレスポンス:', data); // サーバーのレスポンス確認
-
-        // デフォルト値を設定
-        const storeName = data.store_name || ''; // 店名がない場合は空文字列
-        const totalAmount = data.formatted_total || 0; // 合計額がない場合は0
-
         if (data.status === 'success') {
+            const storeName = data.store_name || "";
+            const totalAmount = data.formatted_total || 0;
+
+            // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
             window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
         } else {
             alert(`エラー: ${data.message}`);
         }
     })
     .catch(error => {
-        console.error('通信エラー:', error); // エラー内容のデバッグ
+        console.error('エラー:', error);
         alert('処理中にエラーが発生しました。');
     });
 });
