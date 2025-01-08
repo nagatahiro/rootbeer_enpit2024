@@ -12,7 +12,7 @@
       <ul class="navbar-nav ms-auto d-flex flex-row">
         <li class="nav-item">
           <button id="retry-button" class="btn" style="display: none; background-color: cadetblue; color: white;">
-            <i class="fas fa-sync-alt fa-lg"></i>  <!-- アイコンサイズを大きく -->
+            <i class="fas fa-sync-alt fa-lg"></i>
           </button>
         </li>
       </ul>
@@ -54,14 +54,12 @@
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const preview = document.getElementById('preview');
-  const captureButton = document.getElementById('capture-button');
   const retryButton = document.getElementById('retry-button');
   const extractButton = document.getElementById('extract-button');
   const fileInput = document.getElementById('file-input');
   const openCameraButton = document.getElementById('open-camera-button');
   const resultDiv = document.getElementById('result');
   const context = canvas.getContext('2d');
-  let stream = null;
 
   // 戻るボタン
   document.getElementById('back-button').addEventListener('click', function() {
@@ -90,8 +88,8 @@
           context.drawImage(img, 0, 0);
           
           // 画像データをデータURLとして取得
-          const imageData = canvas.toDataURL('image/jpeg', 0.4);  // 画質を最大（1.0）に設定
-          preview.src = imageData;
+          const compressedData = canvas.toDataURL('image/jpeg', 0.4);  // JPEG形式で圧縮
+          preview.src = compressedData;
           
           // プレビュー表示とボタン表示
           video.style.display = 'none';
@@ -117,9 +115,7 @@
   
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const imageData = canvas.toDataURL('image/jpeg', 0.4);
-
-    console.log('送信する画像データ:', imageData); // 保存ボタンを押した際のデバッグ
+    const compressedData = canvas.toDataURL('image/jpeg', 0.4);  // JPEG形式で圧縮
 
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
@@ -128,24 +124,27 @@
             'X-CSRFToken': '{{ csrf_token }}',
         },
         body: new URLSearchParams({
-            'image': imageData,
+            'image': compressedData,
             'group_id': '{{ group.id }}'
         })
     })
     .then(response => response.json())
     .then(data => {
-        console.log('サーバーからのレスポンス:', data); // サーバーのレスポンス確認
         if (data.status === 'success') {
-            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(data.store_name) + "&total_amount=" + encodeURIComponent(data.formatted_total);
+            const storeName = data.store_name || "";
+            const totalAmount = data.formatted_total || 0;
+
+            // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
+            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
         } else {
             alert(`エラー: ${data.message}`);
         }
     })
     .catch(error => {
-        console.error('通信エラー:', error); // エラー内容のデバッグ
+        console.error('エラー:', error);
         alert('処理中にエラーが発生しました。');
     });
-  });
+});
 
 </script>
 {% endblock %}

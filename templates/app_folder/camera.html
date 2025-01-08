@@ -19,14 +19,17 @@
     </div>
   </nav>
   
+  <!-- スマホカメラを呼び出すボタン -->
   <button id="open-camera-button" class="btn btn-outline-primary"><i class="fa fa-camera"></i><br>カメラを起動</button>
   
+  <!-- カメラ機能 -->
   <div class="camera-container mt-4">
     <video id="video" width="100%" autoplay style="display: none;"></video>
     <canvas id="canvas" style="display: none;"></canvas>
     <img id="preview" width="100%" style="display: none;" alt="撮影画像のプレビュー">
     <div class="mt-2">
       <button id="extract-button" class="btn btn-success w-100" style="display: none;"><i class="fas fa-save ms-2"></i> 保存</button>
+      <!-- スマホカメラから画像を取得するためのインプット -->
       <input type="file" id="file-input" accept="image/*" capture="camera" style="display:none;">
     </div>
     <div id="result" class="mt-4"></div>
@@ -39,7 +42,7 @@
     top: 500%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 10;
+    z-index: 10; /* ボタンが他の要素の上に表示されるように */
   }
 </style>
 
@@ -62,10 +65,10 @@
   document.getElementById('back-button').addEventListener('click', function() {
     window.location.href = "{% url 'app_folder:group_detail' group.id %}";
   });
-
+  
   // スマホカメラを開くボタン
   openCameraButton.addEventListener('click', () => {
-    fileInput.click();
+    fileInput.click();  // カメラを呼び出す
   });
 
   // スマホの標準カメラで撮影
@@ -75,27 +78,23 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const imageData = e.target.result;
+        console.log(imageData); 
+        // キャンバスに画像を描画
         const img = new Image();
         img.onload = function() {
-          // 元画像のアスペクト比を維持しつつ縮小
-          const maxWidth = 800; // 最大幅を指定
-          const scale = Math.min(maxWidth / img.width, 1);
-          const scaledWidth = img.width * scale;
-          const scaledHeight = img.height * scale;
-
-          // キャンバスのサイズを縮小後のサイズに設定
-          canvas.width = scaledWidth;
-          canvas.height = scaledHeight;
-          context.drawImage(img, 0, 0, scaledWidth, scaledHeight);
-
-          // 圧縮してデータURLを生成 (WebP形式)
-          const compressedData = canvas.toDataURL('image/webp', 0.4); // 圧縮率40%
+          // キャンバスのサイズを画像のサイズに合わせる
+          canvas.width = img.width;
+          canvas.height = img.height;
+          context.drawImage(img, 0, 0);
+          
+          // 画像データをデータURLとして取得
+          const compressedData = canvas.toDataURL('image/jpeg', 0.4);  // JPEG形式で圧縮
           preview.src = compressedData;
-
+          
           // プレビュー表示とボタン表示
           video.style.display = 'none';
           preview.style.display = 'block';
-          openCameraButton.style.display = 'none';
+          openCameraButton.style.display = 'none';  // スマホカメラボタンを非表示
           retryButton.style.display = 'inline-block';
           extractButton.style.display = 'inline-block';
         };
@@ -107,16 +106,16 @@
 
   // 再撮影
   retryButton.addEventListener('click', () => {
-    preview.style.display = 'none';
-    retryButton.style.display = 'none';
-    extractButton.style.display = 'none';
-    fileInput.value = '';
-    openCameraButton.style.display = 'inline-block';
+    preview.style.display = 'none'; // プレビュー画像を非表示
+    retryButton.style.display = 'none'; // 再撮影ボタンを非表示
+    extractButton.style.display = 'none'; // 文字抽出ボタンを非表示
+    fileInput.value = ''; // ファイル入力をリセット
+    openCameraButton.style.display = 'inline-block'; // カメラボタンを再表示
   });
-
+  
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const imageData = canvas.toDataURL('image/webp', 0.4); // 圧縮率40%
+    const compressedData = canvas.toDataURL('image/jpeg', 0.4);  // JPEG形式で圧縮
 
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
@@ -125,7 +124,7 @@
             'X-CSRFToken': '{{ csrf_token }}',
         },
         body: new URLSearchParams({
-            'image': imageData,
+            'image': compressedData,
             'group_id': '{{ group.id }}'
         })
     })
@@ -145,7 +144,7 @@
         console.error('エラー:', error);
         alert('処理中にエラーが発生しました。');
     });
-  });
+});
 
 </script>
 {% endblock %}
