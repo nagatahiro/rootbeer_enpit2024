@@ -17,16 +17,4 @@ services:
       - ../.env
     command: sh -c "/usr/local/bin/entrypoint.sh"
 
-  web:
-    container_name: web
-    build:
-      context: .
-      dockerfile: ./containers/nginx/Dockerfile
-    volumes:
-      - ./static:/static
-      - /etc/letsencrypt/:/etc/letsencrypt:ro
-    ports:
-      - "80:80"
-      - "443:443" 
-    depends_on:
-      - app
+
