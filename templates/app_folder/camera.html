@@ -88,7 +88,7 @@
           context.drawImage(img, 0, 0);
           
           // 画像データをデータURLとして取得
-          const compressedData = canvas.toDataURL('image/jpeg', 0.4);  // JPEG形式で圧縮
+          const compressedData = canvas.toDataURL('image/jpeg', 0.3);  // JPEG形式で圧縮
           preview.src = compressedData;
           
           // プレビュー表示とボタン表示
@@ -115,7 +115,7 @@
   
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const compressedData = canvas.toDataURL('image/jpeg', 0.4);  // JPEG形式で圧縮
+    const compressedData = canvas.toDataURL('image/jpeg', 0.3);  // JPEG形式で圧縮
 
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
