@@ -12,6 +12,7 @@ class CustomGroup(models.Model):
     def __str__(self):
         return self.name
 
+
 class Purchase(models.Model):
     group = models.ForeignKey(CustomGroup, on_delete=models.CASCADE, related_name='purchases', null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchases')
