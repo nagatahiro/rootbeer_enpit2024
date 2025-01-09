@@ -325,6 +325,50 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
 
         # 支払い計算
         payments = {}
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        # 招待URLを生成
+        # HTTPSで始まるURLを強制的に生成
+        base_url = 'https://{}'.format(self.request.get_host())
+        invite_url = urljoin(
+            base_url,
+            reverse('app_folder:join_group', args=[group.invite_token])
+        )
+        context['invite_url'] = invite_url
+
+
+        # 合計金額計算
+        purchases = Purchase.objects.filter(group=group).order_by('-date')  # データの降順
+        total_amount = Decimal(purchases.aggregate(Sum('total_amount'))['total_amount__sum'] or 0)
+
+        # ユーザーごとの損益計算
+        members = group.members.all()
+        user_totals = {user: Decimal(purchases.filter(user=user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0) for user in members}
+        num_members = Decimal(len(members))
+        # 調整後の値と余剰分を格納する辞書
+        adjusted_totals = {}
+        user_remainder = {}
+
+        for user, total in user_totals.items():
+            # 割り切れる部分を計算
+            divisible_total = (total // num_members) * num_members
+            # 調整後の値と余剰分を計算
+            adjusted_totals[user] = divisible_total
+            user_remainder[user] = total - divisible_total
+            total_amount=total_amount-user_remainder[user]
+
+
+        # 損失計算
+        user_losses = {
+            user.username: int(round(((adjusted_totals[user]  / num_members) * (num_members - Decimal(1))) - ((total_amount - adjusted_totals[user] ) / num_members), 2))
+            for user in members
+        }
+
+        # 支払い計算
+        payments = {}
         for payer in members:
             for payee in members:
                 if payer != payee:
@@ -335,6 +379,17 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
                         if payer.username not in payments:
                             payments[payer.username] = {}
                         payments[payer.username][payee.username] = int(amount_to_pay)
+
+        context.update({
+            'group': group,
+            'members': members,
+            'total_amount': total_amount,
+            'user_losses': user_losses,
+            'payments': payments,
+            'purchases': purchases, 
+            'invite_url' : invite_url,# 購入データをテンプレートに渡す
+        })
+        return context
 
         context.update({
             'group': group,
