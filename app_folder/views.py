@@ -17,6 +17,7 @@ from google.cloud import vision
 from django.contrib.auth.decorators import login_required
 from django.utils.crypto import get_random_string
 from . import forms
+from urllib.parse import urljoin
 import logging
 import numpy as np
 import cv2
@@ -149,8 +150,10 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
         group = CustomGroup.objects.get(id=group_id)
         context['group'] = group
         context['members'] = group.members.all()
-                # 招待URLを生成
-        invite_url = self.request.build_absolute_uri(
+        # 招待URLを生成
+        base_url = 'https://{}'.format(self.request.get_host())
+        invite_url = urljoin(
+            base_url,
             reverse('app_folder:join_group', args=[group.invite_token])
         )
         context['invite_url'] = invite_url
@@ -276,9 +279,14 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
         group = get_object_or_404(CustomGroup, id=group_id)
 
         # 招待URLを生成
-        invite_url = self.request.build_absolute_uri(
+        # HTTPSで始まるURLを強制的に生成
+        base_url = 'https://{}'.format(self.request.get_host())
+        invite_url = urljoin(
+            base_url,
             reverse('app_folder:join_group', args=[group.invite_token])
         )
+        context['invite_url'] = invite_url
+
 
         # 合計金額計算
         purchases = Purchase.objects.filter(group=group).order_by('-date')  # データの降順
