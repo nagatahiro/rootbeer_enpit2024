@@ -8,81 +8,119 @@
             <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;" onclick="window.location.href='{% url 'app_folder:group_detail' group.id %}';">
                 &#8592;
             </button>
-            <span class="navbar-brand mx-auto" style="color: white; text-align: center;">編集画面: {{ group.name }}</span>
+            <span class="navbar-brand mx-auto" style="color: white; text-align: center;">設定画面: {{ group.name }}</span>
         </div>
     </nav>
-
-    <h3>現在のメンバー</h3>
-    <form method="post">
-        {% csrf_token %}
-        <ul class="list-group">
-            {% for member in members %}
-            <li class="list-group-item d-flex justify-content-between align-items-center" onclick="toggleCheckbox('{{ member.id }}');">
-                <div class="form-check">
-                    <input type="checkbox" id="member-{{ member.id }}" name="remove_members" value="{{ member.id }}">
-                    <label class="form-check-label" for="member-{{ member.id }}">{{ member.username }}</label>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-        <div class="d-flex justify-content-end">
-            <button type="submit" class="btn btn-danger mt-2">選択したメンバーを削除</button>
+    <div class="mt-5 pt-4">
+        <h3 class="text-center">グループ招待用の共有リンク</h3>
+        <div class="invite-container">
+            <input id="copyTarget" type="text" value="{{ invite_url }}" readonly>
+            <button onclick="copyToClipboard()">Copy</button>
         </div>
-    </form>
-
-    <h3>メンバーを検索して追加</h3>
-    <form method="get">
-        <div class="input-group mb-3">
-            <input
-                type="text"
-                name="search"
-                placeholder="ユーザー名を検索"
-                value="{{ request.GET.search|default:'' }}"
-                class="form-control"
-            >
-            <button type="submit" class="btn btn-primary">検索</button>
-        </div>
-    </form>
-
-    {% if search_results %}
+        <hr color=silver>
+        <h4>メンバーの削除</h4>
         <form method="post">
             {% csrf_token %}
-            <ul class="list-group mt-2">
-                {% for user in search_results %}
-                <li class="list-group-item d-flex justify-content-between align-items-center" onclick="toggleCheckbox('{{ user.id }}');">
+            <ul class="list-group">
+                {% for member in members %}
+                <li class="list-group-item d-flex justify-content-between align-items-center" onclick="toggleCheckbox('{{ member.id }}');">
                     <div class="form-check">
-                        <input type="checkbox" id="user-{{ user.id }}" name="new_members" value="{{ user.id }}">
-                        <label class="form-check-label" for="user-{{ user.id }}">{{ user.username }}</label>
+                        <input type="checkbox" id="member-{{ member.id }}" name="remove_members" value="{{ member.id }}">
+                        <label class="form-check-label" for="member-{{ member.id }}">{{ member.username }}</label>
                     </div>
                 </li>
                 {% endfor %}
             </ul>
             <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-success mt-2">選択したユーザーを追加</button>
+                <button type="submit" class="btn btn-danger mt-2 w-100">選択したメンバーを削除</button>
             </div>
-        </form>
-    {% else %}
-        <p class="text-muted">該当するユーザーが見つかりませんでした。</p>
-    {% endif %}
-
-    <div class="d-flex justify-content-end mt-4">
-        <form method="post">
-            {% csrf_token %}
-            <button type="submit" name="delete_group" class="btn btn-danger"
-                    onclick="return confirm('グループを消去しますか？');">
-                グループ消去
-            </button>
-        </form>
+            <hr color=silver>
+            <h4>グループの削除</h4>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <form method="post" class="w-100">
+                    {% csrf_token %}
+                    <button type="submit" name="delete_group" class="btn btn-danger w-100" onclick="return confirm('グループを消去しますか？');">
+                        グループ消去
+                    </button>
+                </form>
+            </div>
+            
+        </div>
     </div>
 </div>
 
 <script>
     function toggleCheckbox(memberId) {
-        const checkbox = document.getElementById(`member-${memberId}`) || document.getElementById(`user-${memberId}`);
+        const checkbox = document.getElementById(`member-${memberId}`);
         if (checkbox) {
             checkbox.checked = !checkbox.checked;
         }
     }
+    function copyToClipboard() {
+        var copyTarget = document.getElementById("copyTarget");
+        copyTarget.select();
+        document.execCommand("Copy");
+        alert("コピーされました！");
+    }
 </script>
+
+<style>   
+    h3 {
+        text-align: center;
+        color: #333;
+    }
+    
+    /* 入力フィールドとボタンを横並びにするコンテナ */
+    .invite-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px; /* ボタンと入力フィールドの間隔 */
+        max-width: 100%;
+        margin-top: 20px;
+        flex-wrap: nowrap; /* 小さな画面でも横並びを保つ */
+    }
+    
+    /* 入力フィールドのスタイル */
+    input[type="text"] {
+        flex: 1; /* 入力フィールドの幅を自動調整 */
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        text-align: center;
+    }
+    
+    /* ボタンのスタイル */
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    
+    /* ボタンのホバー時のスタイル */
+    button:hover {
+        background-color: #45a049;
+    }
+    
+    /* レスポンシブ対応: 小さな画面でも横並びを保つ */
+    @media (max-width: 600px) {
+        .invite-container {
+            justify-content: space-between; /* 画面幅に応じて間隔を調整 */
+        }
+    
+        input[type="text"], button {
+            width: auto; /* 幅を自動調整 */
+        }
+    }
+    
+</style>
 
 {% endblock %}

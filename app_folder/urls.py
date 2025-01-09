@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 from .views import TopView
 from django.contrib.auth.views import LogoutView
-from .views import edit_group
+from .views import edit_group,join_group
 
 app_name = "app_folder"  
 
@@ -20,5 +20,6 @@ urlpatterns = [
     path('edit-group/<int:id>/', edit_group, name='edit_group'),
     path('home/<int:group_id>/photo', views.ShootingRegistration.as_view(), name='shooting_registration'), #撮影ページ
     path('home/<int:group_id>/camera', views.CameraView.as_view(), name='camera'),#カメラ機能 1/7
+    path('join_group/<str:token>/', join_group, name='join_group'),
 ]
 

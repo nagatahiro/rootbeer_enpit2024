@@ -14,6 +14,8 @@ from django.contrib.auth.models import Group, User
 from .models import CustomGroup, Purchase
 from .forms import SignUpForm, SplitBillForm
 from google.cloud import vision
+from django.contrib.auth.decorators import login_required
+from django.utils.crypto import get_random_string
 from . import forms
 import logging
 import numpy as np
@@ -95,60 +97,46 @@ class CreateGroupView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
 
-        if action == "search":
-            # ユーザー検索処理
-            search_query = request.POST.get('search_user', '').strip()
+        if action == "create":
             group_name = request.POST.get('group_name', '').strip()
-
-            # セッションから選択済みユーザーを取得
-            selected_users = self.request.session.get('selected_users', [])
-
-            # 新たに選択されたユーザーを追加
-            new_selected_users = request.POST.getlist('invited_users')
-            selected_users = list(set(selected_users + new_selected_users))  # 重複を排除
-            self.request.session['selected_users'] = selected_users
-
-            # グループ名をセッションに保存
-            request.session['current_group_name'] = group_name
-
-            if search_query:
-                # 検索結果を取得（自分以外のユーザーのみ表示）
-                search_results = list(
-                    User.objects.filter(username__icontains=search_query)
-                    .exclude(id=request.user.id)  # 自分自身を検索結果から除外
-                    .values('id', 'username')
-                )
-                request.session['search_results'] = search_results
-            else:
-                request.session['search_results'] = []
-
-            return redirect('app_folder:create_group')
-
-        elif action == "create":
-            # グループ作成処理
-            group_name = request.POST.get('group_name', '').strip()
-            invited_users_ids = request.POST.getlist('invited_users')  # 招待するユーザーIDリスト
+            invited_users_ids = request.POST.getlist('invited_users')
 
             if group_name:
-                # グループを作成
                 group = CustomGroup.objects.create(name=group_name, owner=request.user)
-
                 group.members.add(request.user)
 
                 if invited_users_ids:
                     invited_users = User.objects.filter(id__in=invited_users_ids)
                     group.members.add(*invited_users)
-                    print(f"招待されたユーザー: {[user.username for user in invited_users]}")
-                
-                # セッションをクリア
-                self.request.session.pop('selected_users', None)
-                self.request.session.pop('current_group_name', None)
 
-                messages.success(request, f"グループ '{group_name}' を作成しました。")
+                # 招待URLを生成
+                invite_token = get_random_string(32)
+                group.invite_token = invite_token
+                group.save()
+
+                #invite_url = request.build_absolute_uri(reverse('app_folder:join_group', args=[invite_token]))
+
+                # グループ詳細ページにリダイレクト
+                return redirect('app_folder:group_detail', group_id=group.id)
+
             else:
                 messages.error(request, "グループ名を入力してください。")
 
-            return redirect('app_folder:home')
+            return redirect('app_folder:create_group')
+        
+@login_required
+def join_group(request, token):
+    group = get_object_or_404(CustomGroup, invite_token=token)
+    
+    # すでにグループのメンバーであればリダイレクト
+    if request.user in group.members.all():
+        return redirect('app_folder:group_detail', group_id=group.id)
+    
+    # メンバーに追加
+    group.members.add(request.user)
+    return redirect('app_folder:group_detail', group_id=group.id)
+
+        
         
 #グループを編集する際に使用
 class EditGroupView(LoginRequiredMixin, TemplateView):
@@ -161,6 +149,11 @@ class EditGroupView(LoginRequiredMixin, TemplateView):
         group = CustomGroup.objects.get(id=group_id)
         context['group'] = group
         context['members'] = group.members.all()
+                # 招待URLを生成
+        invite_url = self.request.build_absolute_uri(
+            reverse('app_folder:join_group', args=[group.invite_token])
+        )
+        context['invite_url'] = invite_url
 
         # 検索クエリがあればそれに基づいて結果を返す
         search_query = self.request.GET.get('search', '')
@@ -275,14 +268,17 @@ from django.db.models import Sum
 class GroupDetailView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/group_detail.html"
 
-
-
     from decimal import Decimal
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(CustomGroup, id=group_id)
+
+        # 招待URLを生成
+        invite_url = self.request.build_absolute_uri(
+            reverse('app_folder:join_group', args=[group.invite_token])
+        )
 
         # 合計金額計算
         purchases = Purchase.objects.filter(group=group).order_by('-date')  # データの降順
@@ -318,7 +314,8 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
             'total_amount': total_amount,
             'user_losses': user_losses,
             'payments': payments,
-            'purchases': purchases,  # 購入データをテンプレートに渡す
+            'purchases': purchases, 
+            'invite_url' : invite_url,# 購入データをテンプレートに渡す
         })
         return context
 

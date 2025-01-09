@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
 
 class CustomGroup(models.Model):
     name = models.CharField(max_length=255)
@@ -8,6 +9,8 @@ class CustomGroup(models.Model):
     members = models.ManyToManyField(User, related_name='custom_group_members')
     regist_date = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
+    invite_token = models.CharField(max_length=32, unique=True, blank=True)
+
 
     def __str__(self):
         return self.name

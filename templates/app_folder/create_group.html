@@ -36,7 +36,6 @@
         </nav>
         
         {% csrf_token %}
-
         <!-- グループ名入力 -->
         <div class="form-group">
             <label for="group_name" class="form-label">グループ名 <span class="text-danger">*</span></label>
@@ -50,53 +49,6 @@
                 required
             >
         </div>
-
-        <!-- ユーザー検索 -->
-        <div class="form-group">
-            <label for="search_user" class="form-label">ユーザー検索</label>
-            <div class="input-group">
-                <input
-                    type="text"
-                    id="search_user"
-                    name="search_user"
-                    class="form-control"
-                    placeholder="ユーザー名を検索"
-                >
-                <button type="submit" name="action" value="search" class="btn btn-primary">検索</button>
-            </div>
-        </div>
-
-        <!-- 検索結果の表示 -->
-        <div class="search-results">
-            <ul class="list-group">
-                {% for result in search_results %}
-                <li class="list-group-item">
-                    <input
-                        type="checkbox"
-                        name="invited_users"
-                        value="{{ result.id }}"
-                        id="user_{{ result.id }}"
-                        class="form-check-input user-checkbox"
-                        data-username="{{ result.username }}"
-                    >
-                    <label class="form-check-label" for="user_{{ result.id }}">{{ result.username }}</label>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- 選択済みユーザー -->
-        <div class="selected-users">
-            <h4>選択済みユーザー</h4>
-            <ul class="list-group" id="selected-users-list">
-                {% for user_id in selected_users %}
-                <li class="list-group-item" id="selected-user-{{ user_id }}">
-                    {{ user_id|get_user_username }}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        
     </form>
 </div>
 

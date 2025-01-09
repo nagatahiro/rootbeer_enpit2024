@@ -5,52 +5,25 @@
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
     <div class="container-fluid">
       <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
-        <i class="fas fa-arrow-left"></i> 
+        <i class="fas fa-arrow-left"></i>
       </button>
       <span class="navbar-brand text-truncate" style="color: white; max-width: 60%;">{{ group.name }} ({{ members.count }})</span>
       <ul class="navbar-nav ms-auto d-flex flex-row">
         <li class="nav-item">
           <a href="{% url 'app_folder:edit_group' group.id %}" id="edit-icon" class="btn btn-link" style="font-size: 1.5rem; color: white;">
-            <i class="fas fa-cog"></i> 
+            <i class="fas fa-cog"></i>
           </a>
         </li>
         <li class="nav-item">
-          <button id="toggle-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
-            <i class="fas fa-info-circle"></i>
+          <button id="share-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
+            <i class="fas fa-user-plus"></i>
           </button>
         </li>
       </ul>
     </div>
   </nav>
 
-  <section id="toggle-section" class="menu-section card shadow-sm" style="display: none; margin-top: 60px; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050; background-color: rgba(0, 0, 0, 0.5);">
-    <div class="card-header d-flex justify-content-between" style="background-color: cadetblue; color: white;">
-      <h4 class="mb-0">グループ詳細</h4>
-      <button id="close-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
-        <i class="fas fa-times"></i> 
-      </button>
-    </div>
-    <div class="card-body overflow-auto" style="background-color: white; padding: 20px;">
-      <div class="mb-3">
-        <h5 class="text-muted">グループ名</h5>
-        <p class="text-dark fw-bold">{{ group.name }}</p>
-      </div>
-      <div class="mb-3">
-        <h5 class="text-muted">グループの所有者</h5>
-        <p class="text-dark fw-bold">{{ group.owner.username }}</p>
-      </div>
-      <div>
-        <h5 class="text-muted">メンバー({{ members.count }}人)</h5>
-        <ul class="list-group">
-          {% for member in members %}
-          <li class="list-group-item p-2">{{ member.username }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <div class="d-flex flex-column align-items-center text-center mb-4">
+  <div class="d-flex flex-column align-items-center text-center mb-4" style="margin-top: 70px;">
     {% for user, loss in user_losses.items %}
       {% if user == request.user.username %}
       <p class="text-dark mb-1">あなたの損益は</p>
@@ -108,23 +81,33 @@
   </form>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const toggleButton = document.getElementById('toggle-button');
-      const toggleSection = document.getElementById('toggle-section');
-      const closeButton = document.getElementById('close-button');
-      const backButton = document.getElementById('back-button');
+    document.addEventListener("DOMContentLoaded", function () {
+        // 共有ボタンの機能
+        const shareButton = document.getElementById("share-button");
+        const shareUrlInput = document.getElementById("share-url");
 
-      toggleButton.addEventListener('click', function () {
-        toggleSection.style.display = 'block';
-      });
+        shareButton.addEventListener("click", function () {
+            const shareData = {
+                title: "招待リンク",
+                text: "以下のリンクから参加してください:",
+                url: "{{ invite_url }}"
+            };
 
-      closeButton.addEventListener('click', function () {
-        toggleSection.style.display = 'none';
-      });
+            // Web Share APIが利用可能かチェック
+            if (navigator.share) {
+                navigator.share(shareData)
+                    .then(() => console.log("共有が成功しました"))
+                    .catch(err => console.error("共有中にエラーが発生しました: ", err));
+            } else {
+                alert("Web Share APIはサポートされていません。グループの設定画面からURLをコピーしてください！");
+            }
+        });
 
-      backButton.addEventListener('click', function () {
-        window.location.href = "{% url 'app_folder:home' %}";
-      });
+        // 戻るボタンの機能
+        const backButton = document.getElementById("back-button");
+        backButton.addEventListener("click", function () {
+            window.location.href = "{% url 'app_folder:home' %}";
+        });
     });
   </script>
 

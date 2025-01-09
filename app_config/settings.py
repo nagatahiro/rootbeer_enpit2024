@@ -31,13 +31,13 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [ '127.0.0.1','localhost','waripoke.xyz','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143']
+ALLOWED_HOSTS = [ '127.0.0.1','localhost','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143']
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 # 10MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 CSRF_TRUSTED_ORIGINS = [
-    '127.0.0.1','localhost','waripoke.xyz','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143'  # または適切なドメイン
+    '127.0.0.1','localhost','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143'  # または適切なドメイン
 ]
 
 # Application definition
@@ -72,6 +72,7 @@ MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 
 # CSRF_TRUSTED_ORIGINS: スキームを追加
 CSRF_TRUSTED_ORIGINS = [
+    "http://10.10.3.137",
     "http://10.10.0.179",
     "http://10.10.1.143",
     "http://127.0.0.1",
@@ -83,6 +84,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 # CORS_ALLOWED_ORIGINS: スキームを追加
 CORS_ALLOWED_ORIGINS = [
+    "http://10.10.3.137",
+    "http://10.232.65.0",
     "http://10.10.0.179",
     "http://10.10.1.143",
     "http://127.0.0.1",
