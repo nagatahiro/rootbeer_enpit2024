@@ -29,7 +29,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [ '127.0.0.1','localhost','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143']
 
@@ -179,6 +179,5 @@ LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ##＃追加
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
