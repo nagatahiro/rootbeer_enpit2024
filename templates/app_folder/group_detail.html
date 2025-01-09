@@ -56,7 +56,6 @@
             <th>店名</th>
             <th>金額</th>
             <th>支払った人</th>
-            <th>時間</th>
             <th></th>
           </tr>
         </thead>
@@ -66,7 +65,6 @@
             <td>{{ purchase.store_name }}</td>
             <td>{{ purchase.total_amount|floatformat:0 }}円</td>
             <td>{{ purchase.user.username }}</td>
-            <td>{{ purchase.date|date:"Y-m-d H:i:s" }}</td>
             <td>
               <form method="post" action="{% url 'app_folder:delete_purchase' purchase.id %}" class="delete-form">
                 {% csrf_token %}
