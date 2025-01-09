@@ -275,6 +275,16 @@ class CameraView(LoginRequiredMixin, TemplateView):
         return redirect('app_folder:camera', group_id=group_id)
 from django.db.models import Sum
 
+
+
+@login_required
+def delete_purchase(request, purchase_id):
+    purchase = get_object_or_404(Purchase, id=purchase_id)
+    if purchase.user == request.user or request.user in purchase.group.members.all():
+        purchase.delete()
+    return HttpResponseRedirect(reverse('app_folder:group_detail', args=[purchase.group.id]))
+
+
 #グループのホームページ、自身の収支が確認できる
 class GroupDetailView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/group_detail.html"
@@ -379,17 +389,6 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
                         if payer.username not in payments:
                             payments[payer.username] = {}
                         payments[payer.username][payee.username] = int(amount_to_pay)
-
-        context.update({
-            'group': group,
-            'members': members,
-            'total_amount': total_amount,
-            'user_losses': user_losses,
-            'payments': payments,
-            'purchases': purchases, 
-            'invite_url' : invite_url,# 購入データをテンプレートに渡す
-        })
-        return context
 
         context.update({
             'group': group,

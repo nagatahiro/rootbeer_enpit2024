@@ -57,6 +57,7 @@
             <th>金額</th>
             <th>支払った人</th>
             <th>時間</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -66,12 +67,21 @@
             <td>{{ purchase.total_amount|floatformat:0 }}円</td>
             <td>{{ purchase.user.username }}</td>
             <td>{{ purchase.date|date:"Y-m-d H:i:s" }}</td>
+            <td>
+              <form method="post" action="{% url 'app_folder:delete_purchase' purchase.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </form>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+  
 
   <form action="{% url 'app_folder:shooting_registration' group.id %}" id="shooting-form">
     {% csrf_token %}

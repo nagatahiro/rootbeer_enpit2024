@@ -22,5 +22,6 @@ urlpatterns = [
     path('home/<int:group_id>/camera', views.CameraView.as_view(), name='camera'),#カメラ機能 1/7
     path('join_group/<str:token>/', join_group, name='join_group'),
     path('information/', views.HowToView.as_view(), name='howtouse'),
+    path('purchase/<int:purchase_id>/delete/', views.delete_purchase, name='delete_purchase'),
 ]
 
