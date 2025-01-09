@@ -68,9 +68,9 @@
             <td>{{ purchase.user.username }}</td>
             <td>{{ purchase.date|date:"Y-m-d H:i:s" }}</td>
             <td>
-              <form method="post" action="{% url 'app_folder:delete_purchase' purchase.id %}">
+              <form method="post" action="{% url 'app_folder:delete_purchase' purchase.id %}" class="delete-form">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger btn-sm">
+                <button type="submit" class="btn btn-danger btn-sm delete-button">
                   <i class="fas fa-trash-alt"></i>
                 </button>
               </form>
@@ -82,6 +82,7 @@
     </div>
   </div>
   
+  
 
   <form action="{% url 'app_folder:shooting_registration' group.id %}" id="shooting-form">
     {% csrf_token %}
@@ -91,6 +92,17 @@
   </form>
 
   <script>
+    // 全ての削除フォームに対して確認ダイアログを設定
+    document.addEventListener('DOMContentLoaded', function () {
+      const deleteButtons = document.querySelectorAll('.delete-button');
+      deleteButtons.forEach(button => {
+        button.addEventListener('click', function (event) {
+          if (!confirm('本当に削除しますか？')) {
+            event.preventDefault(); // 確認ダイアログで「キャンセル」を選択した場合はフォーム送信を中止
+          }
+        });
+      });
+    });
     document.addEventListener("DOMContentLoaded", function () {
         // 共有ボタンの機能
         const shareButton = document.getElementById("share-button");
