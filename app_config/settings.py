@@ -179,7 +179,9 @@ LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ##＃追加
 
-SECURE_SSL_REDIRECT = True  # HTTPS を強制
+USE_X_FORWARDED_HOST = True  # プロキシからのホスト情報を使用
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # プロキシから HTTPS を認識
+
 
 
 
