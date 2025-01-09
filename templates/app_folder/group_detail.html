@@ -39,7 +39,7 @@
         {% for payee, amount in payees.items %}
           {% if payer == request.user.username or payee == request.user.username %}
           <li class="list-group-item">
-            <span class="text-dark">{% if payer == request.user.username %}<strong>{{ payee }}</strong>さんから<strong>{{ amount }}円</strong>受け取る{% else %}<strong>{{ payer }}</strong>さんに<strong>{{ amount }}円</strong>渡す{% endif %}</span>
+            <span class="text-dark">{% if payer == request.user.username %}<strong>{{ payer }}</strong>さんから<strong>{{ amount }}円</strong>受け取る{% else %}<strong>{{ payee }}</strong>さんに<strong>{{ amount }}円</strong>渡す{% endif %}</span>
           </li>
           {% endif %}
         {% endfor %}
