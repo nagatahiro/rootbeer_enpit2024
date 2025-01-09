@@ -179,4 +179,6 @@ LOGOUT_REDIRECT_URL = "app_folder:top"      ### 追加
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ##＃追加
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 
