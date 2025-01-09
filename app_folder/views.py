@@ -34,6 +34,14 @@ logger = logging.getLogger(__name__)
 class TopView(TemplateView):
     template_name = "app_folder/top.html"
 
+class HowToView(LoginRequiredMixin, TemplateView):
+    template_name = "app_folder/howtouse.html"
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+    
+
+
 #ログイン時に使用
 class LoginView(LoginView):
     """ログインページ"""
@@ -296,10 +304,22 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
         members = group.members.all()
         user_totals = {user: Decimal(purchases.filter(user=user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0) for user in members}
         num_members = Decimal(len(members))
+        # 調整後の値と余剰分を格納する辞書
+        adjusted_totals = {}
+        user_remainder = {}
+
+        for user, total in user_totals.items():
+            # 割り切れる部分を計算
+            divisible_total = (total // num_members) * num_members
+            # 調整後の値と余剰分を計算
+            adjusted_totals[user] = divisible_total
+            user_remainder[user] = total - divisible_total
+            total_amount=total_amount-user_remainder[user]
+
 
         # 損失計算
         user_losses = {
-            user.username: round(((user_totals[user] / num_members) * (num_members - Decimal(1))) - ((total_amount - user_totals[user]) / num_members), 2)
+            user.username: int(round(((adjusted_totals[user]  / num_members) * (num_members - Decimal(1))) - ((total_amount - adjusted_totals[user] ) / num_members), 2))
             for user in members
         }
 
@@ -308,13 +328,13 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
         for payer in members:
             for payee in members:
                 if payer != payee:
-                    payer_amount = user_totals[payer] / num_members
-                    payee_amount = user_totals[payee] / num_members
+                    payer_amount = adjusted_totals[payer] / num_members
+                    payee_amount = adjusted_totals[payee] / num_members
                     amount_to_pay = round(payer_amount - payee_amount, 2)
                     if amount_to_pay > 0:
                         if payer.username not in payments:
                             payments[payer.username] = {}
-                        payments[payer.username][payee.username] = amount_to_pay
+                        payments[payer.username][payee.username] = int(amount_to_pay)
 
         context.update({
             'group': group,

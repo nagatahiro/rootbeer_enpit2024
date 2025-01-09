@@ -247,3 +247,18 @@ ul {
   li:nth-child(even) {
     background-color: #e9e9e9; /* 偶数項目の背景色 */
   }
+
+  .navbar-nav .nav-item {
+    position: relative;
+  }
+  
+  .navbar-nav .nav-item:not(:last-child)::after {
+    content: "|";
+    position: absolute;
+    right: -10px; /* 必要に応じて調整 */
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px; /* サイズ調整 */
+    color: #000; /* 色調整 */
+  }
+  

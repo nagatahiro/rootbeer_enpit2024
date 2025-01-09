@@ -26,20 +26,20 @@
   <div class="d-flex flex-column align-items-center text-center mb-4" style="margin-top: 70px;">
     {% for user, loss in user_losses.items %}
       {% if user == request.user.username %}
-      <p class="text-dark mb-1">あなたの損益は</p>
+      <p class="text-dark mb-1">{{request.user.username}}さんの損益は</p>
       <p style="font-size: 2rem; font-weight: bold; color: {% if loss >= 0 %}green{% else %}red{% endif %};">{{ loss }}円</p>
       {% endif %}
     {% endfor %}
   </div>
 
   <div class="mb-4">
-    <h5 class="text-muted">あなたの関連支払い</h5>
+    <h5 class="text-muted">{{request.user.username}}さんの関連支払い</h5>
     <ul class="list-group">
       {% for payer, payees in payments.items %}
         {% for payee, amount in payees.items %}
           {% if payer == request.user.username or payee == request.user.username %}
           <li class="list-group-item">
-            <span class="text-dark">{% if payer == request.user.username %}{{ payee }}から¥{{ amount }}受け取る{% else %}{{ payer }}に¥{{ amount }}渡す{% endif %}</span>
+            <span class="text-dark">{% if payer == request.user.username %}<strong>{{ payer }}</strong>さんから<strong>{{ amount }}円</strong>受け取る{% else %}<strong>{{ payer }}</strong>さんに<strong>{{ amount }}円</strong>渡す{% endif %}</span>
           </li>
           {% endif %}
         {% endfor %}
@@ -55,7 +55,7 @@
           <tr>
             <th>店名</th>
             <th>金額</th>
-            <th>ユーザー</th>
+            <th>支払った人</th>
             <th>時間</th>
           </tr>
         </thead>
@@ -63,7 +63,7 @@
           {% for purchase in purchases %}
           <tr>
             <td>{{ purchase.store_name }}</td>
-            <td>¥{{ purchase.total_amount }}</td>
+            <td>{{ purchase.total_amount|floatformat:0 }}円</td>
             <td>{{ purchase.user.username }}</td>
             <td>{{ purchase.date|date:"Y-m-d H:i:s" }}</td>
           </tr>
