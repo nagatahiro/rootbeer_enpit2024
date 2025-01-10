@@ -6,7 +6,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
         <div class="container-fluid">
             <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;" onclick="window.location.href='{% url 'app_folder:group_detail' group.id %}';">
-                &#8592;
+                <i class="fas fa-arrow-left"></i>
             </button>
             <span class="navbar-brand mx-auto" style="color: white; text-align: center;">設定画面: {{ group.name }}</span>
         </div>

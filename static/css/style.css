@@ -15,7 +15,9 @@ body {
     top: 0;
     left: 0;
     z-index: 1000;
+    box-shadow: none
 }
+
 
 /* コンテンツ */
 #content {
@@ -36,10 +38,6 @@ body {
     border-radius: 8px;
 }
 
-/* リストアイテム */
-.list-group-item {
-    cursor: pointer;
-}
 
 /* チェックボックスとラベルの間隔 */
 .form-check {
@@ -63,8 +61,6 @@ body {
     transform: translateY(0);
 }
 
-
-
 /* スマホ対応 */
 @media (max-width: 768px) {
     .navbar-brand {
@@ -84,7 +80,7 @@ body {
     }
 
     .card {
-        margin: 5px 0;
+        margin: 3px 0;
     }
 
     .group-item {
@@ -148,54 +144,6 @@ h3 {
     margin-bottom: 15px;
 }
 
-.list-group {
-    list-style-type: none;
-    padding: 0;
-}
-
-.list-group-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 15px;
-    margin-bottom: 5px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-.list-group-item .form-check-label {
-    margin-left: 10px;
-}
-
-.btn {
-    padding: 10px 20px;
-    font-size: 1rem;
-    width: 100%; 
-    margin-top: 30px;
-}
-
-.btn-primary {
-    background-color: #007bff;
-    border: none;
-}
-
-.btn-success {
-    background-color: #28a745;
-    border: none;
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-    border: none;
-}
-
-.btn:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-
 .text-center {
     display: flex;
     flex-direction: column;
@@ -230,7 +178,6 @@ h2 {
     margin-top: 10px;
 }
 
-
 ul {
     list-style-type: none; /* 点を消す */
     padding: 0; /* デフォルトの余白をなくす */
@@ -242,23 +189,136 @@ ul {
     padding: 10px; /* アイテム内に余白を追加 */
     background-color: #f9f9f9; /* アイテムの背景色 */
     border-radius: 5px; /* 丸みをつける */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 影を追加 */
   }
   li:nth-child(even) {
     background-color: #e9e9e9; /* 偶数項目の背景色 */
   }
 
-  .navbar-nav .nav-item {
-    position: relative;
-  }
-  
-  .navbar-nav .nav-item:not(:last-child)::after {
-    content: "|";
+/* ボタンのデザイン */
+.navbar .btn {
+    background-color: cadetblue; /* 背景色をcadetblueに設定 */
+    color: white; /* 文字色を白に設定 */
+    border: none; /* ボーダーを削除 */
+    font-size: 1.5rem; /* ボタンのフォントサイズ */
+    border-radius: 4px; /* ボタンに少し丸みを追加 */
+    padding: 8px 12px; /* ボタンの内側の余白 */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* ホバー時のアニメーション */
+    outline: none; 
+}
+
+.navbar .nav-item {
+    background-color: cadetblue; /* 背景色をcadetblueに設定 */
+    color: white; /* 文字色を白に設定 */
+    border: none; /* ボーダーを削除 */
+    font-size: 1.5rem; /* ボタンのフォントサイズ */
+    border-radius: 4px; /* ボタンに少し丸みを追加 */
+    padding: 8px 12px; /* ボタンの内側の余白 */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* ホバー時のアニメーション */
+    outline: none; 
+}
+
+/* ボタンのホバー時のスタイル */
+.navbar .btn:hover {
+    background-color: darkcyan; /* ホバー時の背景色 */
+    color: white; /* ホバー時の文字色 */
+    transform: scale(1.05); /* ホバー時に少し拡大 */
+    outline: none; 
+}
+
+/* アイコンのスタイル */
+.navbar .btn i {
+    pointer-events: none; /* アイコン部分のクリックを無効化 */
+}
+
+
+.form-label {
+    position: relative; /* ラベル全体を基準にする */
+    display: inline-block; /* 必要に応じてインラインブロック化 */
+}
+
+.required-mark {
     position: absolute;
+    top: 0;
     right: -10px; /* 必要に応じて調整 */
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 20px; /* サイズ調整 */
-    color: #000; /* 色調整 */
-  }
-  
+    color: red; /* 赤色 */
+    font-size: 0.9em; /* サイズを少し小さく */
+    line-height: 1; /* アスタリスクの高さを調整 */
+}
+
+
+/* グループリスト */
+.list-unstyled li {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* 下線を薄く */
+    padding: 10px 0; /* 上下に余白を追加 */
+    margin-bottom: 10px; /* 項目間に適度な間隔を設定 */
+    background-color: #ffffff; /* 背景を白に設定 */
+    border-radius: 4px; /* 少し丸みを追加 */
+}
+
+.list-unstyled li a {
+    text-decoration: none; /* 下線を削除 */
+    color: #333; /* テキストカラーをダークグレーに設定 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px; /* 内側に余白を追加 */
+    border-radius: 4px; /* 背景の丸みを合わせる */
+    transition: background-color 0.2s ease; /* 背景色変更時のアニメーション */
+}
+
+.list-unstyled li a:hover {
+    background-color: #f9f9f9; /* ホバー時の背景色を薄いグレーに設定 */
+    color: #000; /* テキストカラーを黒に設定 */
+}
+
+.list-unstyled li h3 {
+    margin: 0; /* タイトルの余白をなくす */
+    font-size: 1.2rem; /* フォントサイズを調整 */
+    color: #333; /* タイトルのカラー */
+}
+
+.list-unstyled li span {
+    font-size: 1rem; /* 矢印のフォントサイズを調整 */
+    color: #888; /* 矢印を薄いグレーに */
+}
+
+.list-unstyled p {
+    margin-top: 15px;
+    font-size: 1rem;
+    color: #666; /* テキストカラーを薄いグレーに */
+}
+
+
+/* 詳細設定ボタン */
+#details-button {
+    background-color: rgb(93, 93, 93);
+    color: #ffffff;
+    font-size: 1.1rem;
+    padding: 12px;
+    border: 2px solid #929292;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    text-align: center;
+}
+
+#details-button:hover {
+    background-color: #4b4b4b;
+    color: white;
+    border-color: #363636;
+}
+
+/* 詳細設定セクション */
+#details-section {
+    margin-top: 20px;
+}
+
+#details-section .form-group {
+    margin-bottom: 15px;
+}
+
+#details-section input {
+    font-size: 1rem;
+    padding: 10px;
+}
+

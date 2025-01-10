@@ -23,5 +23,6 @@ urlpatterns = [
     path('join_group/<str:token>/', join_group, name='join_group'),
     path('information/', views.HowToView.as_view(), name='howtouse'),
     path('purchase/<int:purchase_id>/delete/', views.delete_purchase, name='delete_purchase'),
+    path('accounting/details/<int:purchase_id>/', views.AccountingDetailsView.as_view(), name='accounting_details'),
 ]
 

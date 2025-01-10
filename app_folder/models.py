@@ -30,3 +30,16 @@ class Purchase(models.Model):
 
     def __str__(self):
         return f"Group: {self.group.name} - {self.store_name} - ¥{self.total_amount}"
+
+class PaymentDetail(models.Model):
+    purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name='payment_details')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payment_details')
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['purchase']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} paid ¥{self.amount_paid} for {self.purchase.store_name}"

@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.db import connections, transaction
 from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib.auth.models import Group, User
-from .models import CustomGroup, Purchase
+from .models import CustomGroup, Purchase, PaymentDetail
 from .forms import SignUpForm, SplitBillForm
 from google.cloud import vision
 from django.contrib.auth.decorators import login_required
@@ -24,7 +24,7 @@ import cv2
 import base64
 from pytesseract import image_to_string
 import os
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import re
 
 
@@ -40,7 +40,25 @@ class HowToView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         return context
     
+#グループのホームページ、自身の収支が確認できる
+class AccountingDetailsView(LoginRequiredMixin, TemplateView):
+    template_name = 'app_folder/accounting_details.html'
 
+    def get_context_data(self, **kwargs):
+        # URLからpurchase_idを取得
+        purchase_id = kwargs.get('purchase_id')
+        # 該当のPurchaseオブジェクトを取得
+        purchase = get_object_or_404(Purchase, id=purchase_id)
+        # 関連するPaymentDetailを取得
+        payment_details = purchase.payment_details.all()
+
+        # コンテキストデータを返す
+        context = {
+            'purchase': purchase,
+            'payment_details': payment_details,
+        }
+        return context
+        
 
 #ログイン時に使用
 class LoginView(LoginView):
@@ -288,16 +306,12 @@ def delete_purchase(request, purchase_id):
 #グループのホームページ、自身の収支が確認できる
 class GroupDetailView(LoginRequiredMixin, TemplateView):
     template_name = "app_folder/group_detail.html"
-
-    from decimal import Decimal
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(CustomGroup, id=group_id)
 
         # 招待URLを生成
-        # HTTPSで始まるURLを強制的に生成
         base_url = 'https://{}'.format(self.request.get_host())
         invite_url = urljoin(
             base_url,
@@ -305,77 +319,67 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
         )
         context['invite_url'] = invite_url
 
-
         # 合計金額計算
-        purchases = Purchase.objects.filter(group=group).order_by('-date')  # データの降順
+        purchases = Purchase.objects.filter(group=group).order_by('-date')
         total_amount = Decimal(purchases.aggregate(Sum('total_amount'))['total_amount__sum'] or 0)
+
+        payment_info_list = [] 
+        payment_user = []
+        for i in purchases:
+            if PaymentDetail.objects.filter(purchase=i).exists():
+                details = PaymentDetail.objects.filter(purchase=i)
+                total_amount -= i.total_amount
+                payment_user.append({'user': i.user, 'total_amount': i.total_amount})
+
+                for detail in details:
+                    if i.user != detail.user:
+                        payment_info_list.append({
+                            'purchase': i,
+                            'purchase_user': i.user,
+                            'payment_user': detail.user,
+                            'amount_paid': detail.amount_paid
+                        })
 
         # ユーザーごとの損益計算
         members = group.members.all()
-        user_totals = {user: Decimal(purchases.filter(user=user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0) for user in members}
+        user_totals = {
+            user: Decimal(purchases.filter(user=user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0)
+            for user in members
+        }
+
+        for user, total in user_totals.items():
+            for payment_us in payment_user:
+                if payment_us['user'] == user:
+                    total -= payment_us['total_amount']
+            user_totals[user] = total
+
         num_members = Decimal(len(members))
-        # 調整後の値と余剰分を格納する辞書
         adjusted_totals = {}
         user_remainder = {}
 
         for user, total in user_totals.items():
-            # 割り切れる部分を計算
             divisible_total = (total // num_members) * num_members
-            # 調整後の値と余剰分を計算
             adjusted_totals[user] = divisible_total
             user_remainder[user] = total - divisible_total
-            total_amount=total_amount-user_remainder[user]
-
-
-        # 損失計算
-        user_losses = {
-            user.username: int(round(((adjusted_totals[user]  / num_members) * (num_members - Decimal(1))) - ((total_amount - adjusted_totals[user] ) / num_members), 2))
-            for user in members
-        }
-
-        # 支払い計算
-        payments = {}
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-
-        # 招待URLを生成
-        # HTTPSで始まるURLを強制的に生成
-        base_url = 'https://{}'.format(self.request.get_host())
-        invite_url = urljoin(
-            base_url,
-            reverse('app_folder:join_group', args=[group.invite_token])
-        )
-        context['invite_url'] = invite_url
-
-
-        # 合計金額計算
-        purchases = Purchase.objects.filter(group=group).order_by('-date')  # データの降順
-        total_amount = Decimal(purchases.aggregate(Sum('total_amount'))['total_amount__sum'] or 0)
-
-        # ユーザーごとの損益計算
-        members = group.members.all()
-        user_totals = {user: Decimal(purchases.filter(user=user).aggregate(Sum('total_amount'))['total_amount__sum'] or 0) for user in members}
-        num_members = Decimal(len(members))
-        # 調整後の値と余剰分を格納する辞書
-        adjusted_totals = {}
-        user_remainder = {}
-
-        for user, total in user_totals.items():
-            # 割り切れる部分を計算
-            divisible_total = (total // num_members) * num_members
-            # 調整後の値と余剰分を計算
-            adjusted_totals[user] = divisible_total
-            user_remainder[user] = total - divisible_total
-            total_amount=total_amount-user_remainder[user]
-
+            total_amount -= user_remainder[user]
 
         # 損失計算
-        user_losses = {
-            user.username: int(round(((adjusted_totals[user]  / num_members) * (num_members - Decimal(1))) - ((total_amount - adjusted_totals[user] ) / num_members), 2))
-            for user in members
-        }
+        user_losses = {}
+        for user in members:
+            paid_by_user = sum(
+                item['amount_paid'] for item in payment_info_list if item['purchase_user'] == user
+            )
+            paid_to_user = sum(
+                item['amount_paid'] for item in payment_info_list if item['payment_user'] == user
+            )
+
+            loss = (
+                (adjusted_totals[user] / num_members) * (num_members - Decimal(1)) -
+                ((total_amount - adjusted_totals[user]) / num_members) +
+                (paid_by_user - paid_to_user)
+            )
+
+            user_losses[user.username] = int(round(loss, 2))
 
         # 支払い計算
         payments = {}
@@ -384,7 +388,13 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
                 if payer != payee:
                     payer_amount = adjusted_totals[payer] / num_members
                     payee_amount = adjusted_totals[payee] / num_members
+                    for i in payment_info_list:
+                        if i['purchase_user']==payer and i['payment_user']==payee:
+                            payer_amount+=i['amount_paid']
+                        elif i['purchase_user']==payee and i['payment_user']==payer:
+                            payee_amount+=i['amount_paid']
                     amount_to_pay = round(payer_amount - payee_amount, 2)
+
                     if amount_to_pay > 0:
                         if payer.username not in payments:
                             payments[payer.username] = {}
@@ -396,11 +406,10 @@ class GroupDetailView(LoginRequiredMixin, TemplateView):
             'total_amount': total_amount,
             'user_losses': user_losses,
             'payments': payments,
-            'purchases': purchases, 
-            'invite_url' : invite_url,# 購入データをテンプレートに渡す
+            'purchases': purchases,
+            'invite_url': invite_url,
         })
         return context
-
 
     def post(self, request, *args, **kwargs):
         group_id = self.kwargs.get('group_id')
@@ -477,32 +486,93 @@ class ShootingRegistration(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             selected_member_id = request.POST.get('selected_member')
             store_name = form.cleaned_data.get('store_name')
-            total_amount_input = request.POST.get('total_amount')  # フォームから送信された金額を取得
+            total_amount_input = request.POST.get('total_amount')
 
-            # 金額の整形（円マークやその他の文字を除去）
-            total_amount_clean = re.sub(r'[^\d.]', '', str(total_amount_input))
+            # 金額の整形
+            total_amount_clean = re.sub(r'[^\d.]', '', str(total_amount_input))  # 数字と小数点以外を削除
+
+            # 金額をDecimal型に変換
+            try:
+                total_amount_decimal = Decimal(total_amount_clean)
+            except InvalidOperation:
+                messages.error(request, "合計金額の形式が無効です。")
+                return redirect('app_folder:group_detail', group_id=group_id)
 
             try:
-                # 金額をDecimal型に変換して保存
-                total_amount_decimal = Decimal(total_amount_clean)
+                payment_details = []
+                total_payment_details = Decimal('0')
+                for member in group.members.all():
+                    key = f'payment_details_{member.id}'
+                    if key in request.POST and request.POST[key].strip():
+                        amount_str = request.POST[key].strip()
+                        amount_clean = re.sub(r'[^\d.]', '', amount_str)
+
+                        try:
+                            amount = Decimal(amount_clean)
+                            payment_details.append({
+                                'user': member,
+                                'amount_paid': amount
+                            })
+                            total_payment_details += amount
+                        except InvalidOperation:
+                            messages.error(request, f"{member.username} の支払額の形式が無効です。")
+                            return redirect('app_folder:group_detail', group_id=group_id)
 
                 with transaction.atomic():
                     # 選択されたメンバーの取得
                     selected_member = User.objects.get(id=selected_member_id)
-                    group = CustomGroup.objects.get(id=group_id)
 
                     # Purchaseインスタンスを作成
                     purchase = Purchase.objects.create(
-                        group=group,  # group を ForeignKey として保存
+                        group=group,
                         user=selected_member,
-                        total_amount=total_amount_decimal,  # Decimal型で保存
+                        total_amount=total_amount_decimal,
                         store_name=store_name
                     )
 
-                    # セッションの更新（もし必要なら）
-                    request.session['purchase_id'] = purchase.id
+                    # 詳細設定の全てが未入力の場合
+                    if not payment_details:
+                        request.session['purchase_id'] = purchase.id
+                        request.session['total_amount'] = None
+                        request.session['store_name'] = None
+                        request.session['selected_member_id'] = None
+                        messages.success(request, "購入情報が保存されました（詳細設定なし）。")
+                        return redirect('app_folder:group_detail', group_id=group_id)
+
+                    # 合計金額チェック
+                    if total_payment_details > total_amount_decimal:
+                        messages.error(request, "詳細設定の合計が合計金額を上回っています。")
+                        return redirect('app_folder:group_detail', group_id=group_id)
+
+                    # 未入力のメンバーに分割金額を計算
+                    remaining_amount = total_amount_decimal - total_payment_details
+                    unset_members = [
+                        member for member in group.members.all() 
+                        if not any(detail['user'] == member for detail in payment_details)
+                    ]
+                    if unset_members:
+                        split_amount = remaining_amount // len(unset_members)
+                        remainder = remaining_amount % len(unset_members)
+
+                        for i, member in enumerate(unset_members):
+                            amount_paid = split_amount
+                            if i == 0:  # 最初のメンバーが余りを負担
+                                amount_paid += remainder
+                            payment_details.append({
+                                'user': member,
+                                'amount_paid': amount_paid
+                            })
+
+                    # PaymentDetailインスタンスを作成
+                    for detail in payment_details:
+                        PaymentDetail.objects.create(
+                            purchase=purchase,
+                            user=detail['user'],
+                            amount_paid=detail['amount_paid']
+                        )
 
                     # セッションのクリア
+                    request.session['purchase_id'] = purchase.id
                     request.session['total_amount'] = None
                     request.session['store_name'] = None
                     request.session['selected_member_id'] = None
@@ -511,14 +581,15 @@ class ShootingRegistration(LoginRequiredMixin, TemplateView):
                     messages.success(request, "購入情報が保存されました。")
 
             except Exception as e:
-                messages.error(request, "購入情報の保存に失敗しました。詳細: {}".format(str(e)))
+                messages.error(request, f"購入情報の保存に失敗しました。詳細: {str(e)}")
                 logger.error(f"Error saving purchase: {e}")
         else:
             logger.error(f"Form errors: {form.errors}")
             messages.error(request, "無効な入力です。")
 
-        # リダイレクト先に group_id を追加
         return redirect('app_folder:group_detail', group_id=group_id)
+
+
 
 
 #レシートから抽出する際に使用

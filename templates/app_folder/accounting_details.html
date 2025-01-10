@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block contents %}
+
+<div class="container mt-5">
+    <!-- ナビゲーションバー -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+      <div class="container-fluid d-flex justify-content-between align-items-center">
+          <!-- 戻るボタン -->
+          <button id="back-button" class="btn btn-link">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <!-- 登録画面のタイトル（中央に配置） -->
+          <span class="navbar-brand mx-auto">詳細画面</span>
+      </div>
+    </nav>
+
+    <div class="detail-card mt-5 p-4">
+        <h5>店名</h5>
+        <p><strong>{{ purchase.store_name }}</strong></p>
+        <h5>合計金額</h5>    
+        <p><strong>¥{{ purchase.total_amount|floatformat:0 }}</strong></p>
+        <h5>支払った人</h5>    
+        <p><strong>{{ purchase.user.username}}</strong></p>    
+        <h5>登録した日時</h5> 
+        <p><strong>{{ purchase.date|date:"Y-m-d H:i:s" }}</strong></p>
+        <h5>詳細</h5>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>支払いする人</th>
+              <th>金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for detail in payment_details %}
+            <tr>
+              <td>{{ detail.user.username }}</td>
+              <td>{{ detail.amount_paid|floatformat:0 }}円</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2">支払い情報がありません。</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    document.getElementById('back-button').addEventListener('click', function() {
+        // group_detailページへ遷移
+        window.location.href = "{% url 'app_folder:group_detail' purchase.group.id %}";
+    });
+</script>
+    
+{% endblock %}

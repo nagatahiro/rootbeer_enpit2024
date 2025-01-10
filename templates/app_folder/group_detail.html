@@ -61,7 +61,7 @@
         </thead>
         <tbody>
           {% for purchase in purchases %}
-          <tr>
+          <tr style="cursor: pointer;" onclick="window.location='{% url 'app_folder:accounting_details' purchase.id %}'">
             <td>{{ purchase.store_name }}</td>
             <td>{{ purchase.total_amount|floatformat:0 }}円</td>
             <td>{{ purchase.user.username }}</td>
