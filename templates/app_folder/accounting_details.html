@@ -4,17 +4,14 @@
 
 <div class="container mt-5">
     <!-- ナビゲーションバー -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-      <div class="container-fluid d-flex justify-content-between align-items-center">
-          <!-- 戻るボタン -->
-          <button id="back-button" class="btn btn-link">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
+        <div class="container-fluid">
+          <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
             <i class="fas fa-arrow-left"></i>
           </button>
-          <!-- 登録画面のタイトル（中央に配置） -->
-          <span class="navbar-brand mx-auto">詳細画面</span>
-      </div>
-    </nav>
-
+          <span class="navbar-brand text-truncate" style="color: white; max-width: 60%;">詳細</span>
+        </div>
+      </nav>
     <div class="detail-card mt-5 p-4">
         <h5>店名</h5>
         <p><strong>{{ purchase.store_name }}</strong></p>
@@ -47,13 +44,14 @@
         </table>
     </div>
 
-</div>
+
 
 <script>
-    document.getElementById('back-button').addEventListener('click', function() {
-        // group_detailページへ遷移
-        window.location.href = "{% url 'app_folder:group_detail' purchase.group.id %}";
+
+    const backButton = document.getElementById("back-button");
+    backButton.addEventListener("click", function () {
+        window.location.href =  "{% url 'app_folder:group_detail' purchase.group.id %}";
     });
 </script>
-    
+</div>  
 {% endblock %}
