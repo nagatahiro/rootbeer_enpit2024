@@ -7,7 +7,6 @@
 <!-- 修正済みのコード -->
 <div class="container group-create-container">
     <form method="post" id="group-form" class="group-form">
-        
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
             <div class="container-fluid">
                 <!-- 戻るボタン -->
@@ -17,7 +16,7 @@
                     style="font-size: 1.5rem; color: white;" 
                     type="button"
                 >
-                <i class="fas fa-arrow-left"></i>
+                    &#8592;
                 </button>
                 
                 <!-- タイトル -->
@@ -35,11 +34,11 @@
                 </button>
             </div>
         </nav>
-        {% endblock %}
+        
         {% csrf_token %}
         <!-- グループ名入力 -->
         <div class="form-group">
-            <label for="group_name" class="form-label">グループ名 <span class="required-mark">*</span></label>
+            <label for="group_name" class="form-label">グループ名 <span class="text-danger">*</span></label>
             <input
                 type="text"
                 id="group_name"
