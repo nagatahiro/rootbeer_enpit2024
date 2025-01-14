@@ -126,14 +126,16 @@
         },
         body: new URLSearchParams({
             'image': compressedData,
-            'group_id': '{{ group.id }}'
+            'group_id': '{{ group.id }}',
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            alert('画像が保存されました！');
-            // 必要に応じて、リダイレクトや次の処理を追加
+            const storeName = encodeURIComponent(data.store_name || '');
+            const totalAmount = encodeURIComponent(data.total_amount || '');
+            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" 
+                + storeName + "&total_amount=" + totalAmount;
         } else {
             alert(`エラー: ${data.message}`);
         }

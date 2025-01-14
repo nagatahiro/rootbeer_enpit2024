@@ -454,151 +454,6 @@ import re
 from decimal import Decimal
 from django.db import transaction
 
-class ShootingRegistration(LoginRequiredMixin, TemplateView):
-    template_name = "app_folder/shooting_registration.html"
-    logger = logging.getLogger(__name__)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-
-        # セッションからデータを取得（デフォルト値を設定）
-        total_amount = self.request.session.get('total_amount', None)
-        store_name = self.request.session.get('store_name', None)
-        selected_member_id = self.request.session.get('selected_member_id', None)
-
-        selected_member = User.objects.filter(id=selected_member_id).first() if selected_member_id else None
-
-        context.update({
-            'form': SplitBillForm(initial={
-                'selected_member': selected_member_id,  # selected_member_id を初期値として渡す
-                'store_name': store_name,  # store_name を初期値として渡す
-            }, group_id=group_id),  # group_id をフォームに渡す
-            'group': group,
-            'members': group.members.all(),
-            'result': self.request.session.get('result', None),
-            'store_name': store_name,
-            'selected_member': selected_member,
-            'total_amount': total_amount,
-        })
-        return context
-
-    def post(self, request, *args, **kwargs):
-        group_id = self.kwargs.get('group_id')
-        group = get_object_or_404(CustomGroup, id=group_id)
-
-        form = SplitBillForm(request.POST, group_id=group_id)
-        if form.is_valid():
-            selected_member_id = request.POST.get('selected_member')
-            store_name = form.cleaned_data.get('store_name')
-            total_amount_input = request.POST.get('total_amount')
-
-            # 金額の整形
-            total_amount_clean = re.sub(r'[^\d.]', '', str(total_amount_input))  # 数字と小数点以外を削除
-
-            # 金額をDecimal型に変換
-            try:
-                total_amount_decimal = Decimal(total_amount_clean)
-            except InvalidOperation:
-                messages.error(request, "合計金額の形式が無効です。")
-                return redirect('app_folder:group_detail', group_id=group_id)
-
-            try:
-                payment_details = []
-                total_payment_details = Decimal('0')
-                for member in group.members.all():
-                    key = f'payment_details_{member.id}'
-                    if key in request.POST and request.POST[key].strip():
-                        amount_str = request.POST[key].strip()
-                        amount_clean = re.sub(r'[^\d.]', '', amount_str)
-
-                        try:
-                            amount = Decimal(amount_clean)
-                            payment_details.append({
-                                'user': member,
-                                'amount_paid': amount
-                            })
-                            total_payment_details += amount
-                        except InvalidOperation:
-                            messages.error(request, f"{member.username} の支払額の形式が無効です。")
-                            return redirect('app_folder:group_detail', group_id=group_id)
-
-                with transaction.atomic():
-                    # 選択されたメンバーの取得
-                    selected_member = User.objects.get(id=selected_member_id)
-
-                    # Purchaseインスタンスを作成
-                    purchase = Purchase.objects.create(
-                        group=group,
-                        user=selected_member,
-                        total_amount=total_amount_decimal,
-                        store_name=store_name
-                    )
-
-                    # 詳細設定の全てが未入力の場合
-                    if not payment_details:
-                        request.session['purchase_id'] = purchase.id
-                        request.session['total_amount'] = None
-                        request.session['store_name'] = None
-                        request.session['selected_member_id'] = None
-                        messages.success(request, "購入情報が保存されました（詳細設定なし）。")
-                        return redirect('app_folder:group_detail', group_id=group_id)
-
-                    # 合計金額チェック
-                    if total_payment_details > total_amount_decimal:
-                        messages.error(request, "詳細設定の合計が合計金額を上回っています。")
-                        return redirect('app_folder:group_detail', group_id=group_id)
-
-                    # 未入力のメンバーに分割金額を計算
-                    remaining_amount = total_amount_decimal - total_payment_details
-                    unset_members = [
-                        member for member in group.members.all() 
-                        if not any(detail['user'] == member for detail in payment_details)
-                    ]
-                    if unset_members:
-                        split_amount = remaining_amount // len(unset_members)
-                        remainder = remaining_amount % len(unset_members)
-
-                        for i, member in enumerate(unset_members):
-                            amount_paid = split_amount
-                            if i == 0:  # 最初のメンバーが余りを負担
-                                amount_paid += remainder
-                            payment_details.append({
-                                'user': member,
-                                'amount_paid': amount_paid
-                            })
-
-                    # PaymentDetailインスタンスを作成
-                    for detail in payment_details:
-                        PaymentDetail.objects.create(
-                            purchase=purchase,
-                            user=detail['user'],
-                            amount_paid=detail['amount_paid']
-                        )
-
-                    # セッションのクリア
-                    request.session['purchase_id'] = purchase.id
-                    request.session['total_amount'] = None
-                    request.session['store_name'] = None
-                    request.session['selected_member_id'] = None
-
-                    # 成功メッセージ
-                    messages.success(request, "購入情報が保存されました。")
-
-            except Exception as e:
-                messages.error(request, f"購入情報の保存に失敗しました。詳細: {str(e)}")
-                logger.error(f"Error saving purchase: {e}")
-        else:
-            logger.error(f"Form errors: {form.errors}")
-            messages.error(request, "無効な入力です。")
-
-        return redirect('app_folder:group_detail', group_id=group_id)
-
-
-
-
-#レシートから抽出する際に使用
 class PhotographView(View):
     def get(self, request, *args, **kwargs):
         return render(request, 'app_folder/photograph.html')
@@ -678,25 +533,19 @@ class PhotographView(View):
 
     def post(self, request, *args, **kwargs):
         try:
-            logger.info("リクエスト受信: %s", request.POST)
             image_data = request.POST.get('image')
             group_id = request.POST.get('group_id')
 
-            if not image_data:
-                return JsonResponse({'status': 'error', 'message': '画像データがありません。'})
+            if not image_data or not group_id:
+                return JsonResponse({'status': 'error', 'message': '画像またはグループIDがありません。'})
 
-            # Base64データをデコード
-            _, encoded = image_data.split(",", 1)
-            image_bytes = base64.b64decode(encoded)
-
-            # 一時的なファイル名を生成
-            file_name = f"receipt_{uuid.uuid4().hex}.jpg"
-
-            # `ContentFile`を作成
-            image_file = ContentFile(image_bytes, name=file_name)
+            # Base64データをセッションに保存
+            request.session['receipt_image'] = image_data
 
             # Google Cloud Vision APIでテキスト検出
             client = vision.ImageAnnotatorClient()
+            _, encoded = image_data.split(",", 1)
+            image_bytes = base64.b64decode(encoded)
             image = vision.Image(content=image_bytes)
             response = client.text_detection(image=image)
             texts = response.text_annotations
@@ -708,29 +557,91 @@ class PhotographView(View):
             store_name = self.extract_store_name(texts[1:])
             total_amount = self.extract_total_amount(extracted_text)
 
-            # Purchaseモデルインスタンスを作成
-            group = get_object_or_404(CustomGroup, id=group_id)
-            purchase = Purchase.objects.create(
-                group=group,
-                user=request.user,
-                total_amount=Decimal(total_amount or 0),
-                store_name=store_name or "未設定"
-            )
-
-            # 画像を`receipt_image`フィールドに保存
-            purchase.receipt_image.save(file_name, image_file)
-            purchase.save()
+            # セッションに解析結果を保存
+            request.session['store_name'] = store_name or "未設定"
+            request.session['total_amount'] = total_amount or 0
 
             return JsonResponse({
                 'status': 'success',
                 'store_name': store_name,
                 'total_amount': total_amount,
-                'purchase_id': purchase.id
+                'formatted_total': f'¥{total_amount}' if total_amount else None
             })
 
         except Exception as e:
-            logger.error(f"エラー: {e}")
+            logger.error(f"PhotographViewエラー: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)})
+
+# 登録処理
+class ShootingRegistration(LoginRequiredMixin, TemplateView):
+    template_name = "app_folder/shooting_registration.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        context.update({
+            'group': group,
+            'members': group.members.all(),
+            'store_name': self.request.session.get('store_name', ''),
+            'total_amount': self.request.session.get('total_amount', ''),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        group_id = self.kwargs.get('group_id')
+        group = get_object_or_404(CustomGroup, id=group_id)
+
+        form_data = request.POST
+        selected_member_id = form_data.get('selected_member')
+        store_name = form_data.get('store_name')
+        total_amount = form_data.get('total_amount')
+
+        try:
+            # 画像データを取得
+            receipt_image_data = request.session.get('receipt_image')
+            image_file = None
+            if receipt_image_data:
+                _, encoded = receipt_image_data.split(",", 1)
+                image_bytes = base64.b64decode(encoded)
+                file_name = f"receipt_{uuid.uuid4().hex}.jpg"
+                image_file = ContentFile(image_bytes, name=file_name)
+
+            # Purchase作成
+            selected_member = User.objects.get(id=selected_member_id)
+            purchase = Purchase.objects.create(
+                group=group,
+                user=selected_member,
+                store_name=store_name,
+                total_amount=Decimal(total_amount),
+                receipt_image=image_file
+            )
+
+            # PaymentDetailを保存
+            for member in group.members.all():
+                key = f'payment_details_{member.id}'
+                amount = form_data.get(key)
+                if amount:
+                    PaymentDetail.objects.create(
+                        purchase=purchase,
+                        user=member,
+                        amount_paid=Decimal(amount)
+                    )
+
+            # セッションデータをクリア
+            request.session.pop('store_name', None)
+            request.session.pop('total_amount', None)
+            request.session.pop('receipt_image', None)
+
+            return redirect('app_folder:group_detail', group_id=group_id)
+
+        except Exception as e:
+            logger.error(f"ShootingRegistrationエラー: {e}")
+            return redirect('app_folder:group_detail', group_id=group_id)
+
+
+
 
 
 
