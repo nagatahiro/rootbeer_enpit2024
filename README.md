@@ -11,11 +11,9 @@ https://waripoke.xyz/
 従来の**割り勘アプリ**とは違って、<br>
 **グループで共有して自動で管理してくれる機能**が備わっている。
 
-
 ## 使い方
 
 ## チームメンバー
+[Contributors](https://github.com/nagatahiro/rootbeer_enpit2024/graphs/contributors)
 
 ### TOOLS
-
-
