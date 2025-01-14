@@ -49,4 +49,8 @@ https://waripoke.xyz/
   ・<a href = "https://github.com/maeshirotakao">眞榮城喬雄</a><br>
   
 ### 使用技術🪛
-
+- **フレームワーク**: Django  
+- **Webサーバー**: Nginx  
+- **アプリケーションサーバー**: Gunicorn  
+- **コンテナ管理**: Docker  
+- **OCR API**: Google Cloud Vision  
