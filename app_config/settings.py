@@ -32,7 +32,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [ '127.0.0.1','10.10.5.235','localhost','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143']
 
