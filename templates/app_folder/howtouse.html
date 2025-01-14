@@ -1,48 +1,101 @@
 {% extends "base.html" %}
 
 {% block contents %}
-<div class="container d-flex justify-content-center align-items-center vh-100">
-    <h2>このアプリについて</h2>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ワリポケ操作説明</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            padding: 1rem;
+        }
+        .section {
+            margin-bottom: 2rem;
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 2px solid cadetblue;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .section p {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+        }
+        .button {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #0078d7;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #005bb5;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
 
-    このアプリはグループでの複数の割り勘を簡単にしてくれるアプリです。
-    
+        <div class="section">
+            <h2>1. ログイン画面</h2>
+            <p>ログイン後、ホーム画面に移動します。</p>
+        </div>
 
+        <div class="section">
+            <h2>2. ホーム画面</h2>
+            <p>＋ボタンを押してグループ作成画面に移動します。</p>
+        </div>
 
+        <div class="section">
+            <h2>3. グループ作成</h2>
+            <p>グループ名を記入し、作成ボタンを押してグループを作成します。</p>
+        </div>
 
-</div>
+        <div class="section">
+            <h2>4. メンバー招待</h2>
+            <p>右上の人のマークを押して招待リンクを共有します。リンクを開いた人は自動でグループに参加します。</p>
+        </div>
+
+        <div class="section">
+            <h2>5. 登録画面</h2>
+            <p>
+                1. 支払いする人を選びます。<br>
+                2. 右上のレシートを選択します。<br>
+                3. レシートがない場合は手入力します。
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>6. レシート保存画面</h2>
+            <p>レシートを撮影して保存します。遠すぎるとエラーが出ることがあります。</p>
+        </div>
+
+        <div class="section">
+            <h2>7. 詳細</h2>
+            <p>各メンバーの支払い状況やログを確認できます。</p>
+        </div>
+
+        <div class="section">
+            <h2>8. 支払いログ画面</h2>
+            <p>店名・金額・支払った人・登録日時が確認できます。</p>
+        </div>
+    </div>
+</body>
+</html>
 {% endblock %}
-
-<style>
-    .gallery-container {
-        max-width: 600px;
-        overflow-x: scroll;
-        white-space: nowrap;
-    }
-
-    .gallery {
-        display: flex;
-        gap: 16px;
-    }
-
-    .gallery-item {
-        flex: 0 0 auto;
-        width: 100%;
-        max-width: 300px;
-    }
-
-    .gallery img {
-        width: 100%;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .gallery-container::-webkit-scrollbar {
-        height: 10px;
-    }
-
-    .gallery-container::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.3);
-        border-radius: 5px;
-    }
-</style>

@@ -28,7 +28,7 @@
         {% csrf_token %}
         
         <!-- 支払いする人の選択 -->
-        <h3>支払いする人</h3>
+        <h3>支払った人</h3>
         <select name="selected_member" required class="form-control">
             {% for member in members %}
                 <option value="{{ member.id }}" {% if member.id == request.user.id %} selected {% endif %}>
@@ -44,13 +44,14 @@
 
         <!-- 合計金額入力 -->
         <h4>合計金額</h4>
-        <input type="text" name="total_amount" class="form-control" id="total-amount-input" required placeholder="金額を入力してください" value="{{ total_amount|default:'' }}">
+        <input type="number" name="total_amount" class="form-control" id="total-amount-input" required placeholder="金額を入力してください" value="{{ total_amount|default:'' }}">
 
         <!-- 詳細設定ボタン --> 
-        <button type="button" id="details-button" class="btn btn-d details-button" style="width: 100%; margin-top: 30px;">個別で値段を設定  <i class="fas fa-chevron-down"></i></button>
+        <button type="button" id="details-button" class="btn btn-d details-button" style="width: 100%; margin-top: 30px;">支払い詳細設定  <i class="fas fa-chevron-down"></i></button>
   
         <!-- 詳細設定セクション -->
         <section id="details-section" style="display: none;">
+            <p>割り勘ではなく個別で値段を設定できます。また、割り勘に含めない場合は0を入力してください。</p>
             {% for member in members %}
                 <div class="form-group">
                     <label>{{ member.username }}の支払額:</label>
@@ -65,6 +66,7 @@
 
 
 </div>
+
 <script>
     const detailsButton = document.getElementById('details-button');
     const detailsSection = document.getElementById('details-section');
@@ -78,11 +80,11 @@
             detailsSection.style.display = 'none';
         }
     });
-
     document.getElementById('back-button').addEventListener('click', function() {
         // group_detailページへ遷移
         window.location.href = "{% url 'app_folder:group_detail' group.id %}";
     });
+
     
 </script>
 {% endblock %}

@@ -116,7 +116,7 @@
   
   // 文字抽出
   extractButton.addEventListener('click', () => {
-    const compressedData = canvas.toDataURL('image/jpeg', 0.3);  // JPEG形式で圧縮
+    const compressedData = canvas.toDataURL('image/jpeg', 0.3);
 
     fetch("{% url 'app_folder:photograph' %}", {
         method: 'POST',
@@ -132,11 +132,8 @@
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            const storeName = data.store_name || "";
-            const totalAmount = data.formatted_total || 0;
-
-            // shooting_registration.htmlにリダイレクトして、抽出した情報をクエリパラメータとして渡す
-            window.location.href = "{% url 'app_folder:shooting_registration' group.id %}?store_name=" + encodeURIComponent(storeName) + "&total_amount=" + encodeURIComponent(totalAmount);
+            alert('画像が保存されました！');
+            // 必要に応じて、リダイレクトや次の処理を追加
         } else {
             alert(`エラー: ${data.message}`);
         }
@@ -146,6 +143,7 @@
         alert('処理中にエラーが発生しました。');
     });
 });
+
 
 </script>
 {% endblock %}

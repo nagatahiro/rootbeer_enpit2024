@@ -22,6 +22,7 @@ class Purchase(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     store_name = models.CharField(max_length=255)
     date = models.DateTimeField(auto_now_add=True)
+    receipt_image = models.ImageField(upload_to='receipts/', null=True, blank=True)  # レシート画像のフィールド
 
     class Meta:
         indexes = [

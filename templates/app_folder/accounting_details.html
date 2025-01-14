@@ -5,53 +5,82 @@
 <div class="container mt-5">
     <!-- ナビゲーションバー -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: cadetblue;">
-        <div class="container-fluid">
+      <div class="container-fluid d-flex justify-content-between align-items-center">
           <button id="back-button" class="btn btn-link" style="font-size: 1.5rem; color: white;">
-            <i class="fas fa-arrow-left"></i>
+              <i class="fas fa-arrow-left"></i>
           </button>
-          <span class="navbar-brand text-truncate" style="color: white; max-width: 60%;">詳細</span>
-        </div>
-      </nav>
+          <span class="navbar-brand mx-auto text-center" style="color: white;">詳細</span>
+          <div style="width: 40px;"></div> <!-- ボタンのスペースを確保 -->
+      </div>
+  </nav>
+  
+
     <div class="detail-card mt-5 p-4">
-        <h5>店名</h5>
+        <h2 class="section">店名</h2>
         <p><strong>{{ purchase.store_name }}</strong></p>
-        <h5>合計金額</h5>    
+        <hr>
+        
+        <h2 class="section">合計金額</h2>    
         <p><strong>¥{{ purchase.total_amount|floatformat:0 }}</strong></p>
-        <h5>支払った人</h5>    
-        <p><strong>{{ purchase.user.username}}</strong></p>    
-        <h5>登録した日時</h5> 
+        <hr>
+        <h2 class="section">支払った人</h2>    
+        <p><strong>{{ purchase.user.username }}</strong></p>    
+        <hr>
+        <h2 class="section">登録した日時</h2> 
         <p><strong>{{ purchase.date|date:"Y-m-d H:i:s" }}</strong></p>
-        <h5>詳細</h5>
+        <hr>
+        <h2 class="section">レシート画像</h2>
+        {% if purchase.receipt_image %}
+        <img src="{{ purchase.receipt_image.url }}" alt="レシート画像" class="img-fluid">
+        {% else %}
+        <p>画像は添付されていません。</p>
+        {% endif %}
+        <hr>
+    
+        <h2 class="section">詳細</h2>
         <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>支払いする人</th>
-              <th>金額</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for detail in payment_details %}
-            <tr>
-              <td>{{ detail.user.username }}</td>
-              <td>{{ detail.amount_paid|floatformat:0 }}円</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="2">支払い情報がありません。</td>
-            </tr>
-            {% endfor %}
-          </tbody>
+            <thead>
+                <tr>
+                    <th>支払いする人</th>
+                    <th>金額</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in payment_details %}
+                <tr>
+                    <td>{{ detail.user.username }}</td>
+                    <td>{{ detail.amount_paid|floatformat:0 }}円</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">支払い情報がありません。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
-    </div>
-
-
-
-<script>
-
-    const backButton = document.getElementById("back-button");
-    backButton.addEventListener("click", function () {
-        window.location.href =  "{% url 'app_folder:group_detail' purchase.group.id %}";
-    });
-</script>
+      </div>
+    <script>
+        const backButton = document.getElementById("back-button");
+        backButton.addEventListener("click", function () {
+            window.location.href = "{% url 'app_folder:group_detail' purchase.group.id %}";
+        });
+    </script>
 </div>  
+<style>
+  .section {
+      margin-bottom: 2rem;
+  }
+  .section h2 {
+      color: #333;
+      border-bottom: 2px solid cadetblue;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+  }
+  .section p {
+      margin: 0.5rem 0;
+      line-height: 1.6;
+  }
+
+</style>
+
 {% endblock %}

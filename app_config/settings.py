@@ -22,6 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -29,15 +32,15 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = [ '127.0.0.1','localhost','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143']
+ALLOWED_HOSTS = [ '127.0.0.1','10.10.5.235','localhost','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143']
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 # 10MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 CSRF_TRUSTED_ORIGINS = [
-    '127.0.0.1','localhost','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143'  # または適切なドメイン
+    '127.0.0.1','localhost','10.10.5.235','waripoke.xyz','10.10.3.137','https://waripoke.xyz','162.43.90.122','10.10.0.179','192.168.0.110','10.10.1.143'  # または適切なドメイン
 ]
 
 # Application definition
