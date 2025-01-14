@@ -41,7 +41,7 @@ https://waripoke.xyz/
    - 店名、金額、支払った人、登録日時などの情報が確認できるログ機能があります。
 
 ## メンバー🫂
-<p>**チームネーム**:ルートビア🍺</p>
+<p>チームネーム:ルートビア🍺</p>
 【Member】<br>
   ・<a href = "https://github.com/nagatahiro">永田平拓幸</a><br>
   ・<a href = "https://github.com/smryouma">大石根竜馬</a><br>
