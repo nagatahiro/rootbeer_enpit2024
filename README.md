@@ -1,6 +1,5 @@
 # rootbeer_enpit2024：ワリポケ💰
-## アプリ🔗
-https://waripoke.xyz/
+
 
 ## エレベーターピッチ🛗
 **旅行先で割り勘**をしたい<br>
